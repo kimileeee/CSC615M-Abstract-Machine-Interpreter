@@ -42,9 +42,8 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
 
     # VISITOR METHODS
     def visitProgram(self, ctx:AbstractMachineParser.ProgramContext):
-        pass
-
-        return self.visitChildren(ctx)
+        self.visitChildren(ctx)
+        self.print_symbol_table()
     
 
     def visitStackDeclaration(self, ctx:AbstractMachineParser.StackDeclarationContext):

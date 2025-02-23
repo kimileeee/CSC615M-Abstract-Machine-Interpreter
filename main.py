@@ -2,7 +2,7 @@ from antlr4 import *
 from automata.AbstractMachineLexer import AbstractMachineLexer
 from automata.AbstractMachineParser import AbstractMachineParser
 from automata.AbstractMachineParserVisitor import AbstractMachineParserVisitor
-import AbstractMachineInterpreter
+from AbstractMachineInterpreter import AbstractMachineInterpreter
 from datetime import *
 import argparse
 
@@ -24,7 +24,7 @@ def check_lexer(tokens):
 
 def main():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('-F', type=str, help='Your board game source code file', default='./samples/sample05.txt')
+    argparser.add_argument('-F', type=str, help='Your board game source code file', default='./samples/sample06.txt')
     args = argparser.parse_args()
 
     with open(args.F, 'r') as file:
@@ -53,6 +53,8 @@ def main():
                 tree = parser.program()  # Replace `startRule` with your entry point rule
             except Exception as e:
                 print(e)
+
+            run_interpreter(tree)
 
             # if len(error_listener.errors) == 0:
             #     run_visitor(tree)

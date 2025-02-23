@@ -19,7 +19,7 @@ memory_declaration  : STACK IDENTIFIER          # StackDeclaration
 
 logic_declaration   : identifer CLOSE_BRACKET commmand param_list (COMMA param_list)*
                     | identifer CLOSE_BRACKET memory_operation param_list (COMMA param_list)*
-                    | identifer CLOSE_BRACKET direction param_list (COMMA param_list)*
+                    | identifer CLOSE_BRACKET move_over_tape param_list (COMMA param_list)*
                     ;
 
 commmand    : SCAN
