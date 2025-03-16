@@ -9,6 +9,7 @@ DATA : '.DATA';
 STACK : 'STACK';
 QUEUE : 'QUEUE';
 TAPE : 'TAPE';
+TAPE_2D: '2D_TAPE';
 
 LOGIC : '.LOGIC';
 SCAN : 'SCAN';

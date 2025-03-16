@@ -4,46 +4,44 @@ options {
     tokenVocab = AbstractMachineLexer;
 }
 
-program : DATA memory_declaration+ LOGIC logic_declaration+
-        | LOGIC logic_declaration+
+program : (DATA memory_declaration+)* LOGIC logic_declaration+     #FullProgram
+        // | LOGIC logic_declaration+                              #LogicOnlyProgram
         ;
 
-identifer : IDENTIFIER                      # Identifier
+identifier : IDENTIFIER                      # IdentifierReal
           | SYMBOL                          # SymbolAsIdentifier
           ;
 
-memory_declaration  : STACK IDENTIFIER          # StackDeclaration
-                    | QUEUE IDENTIFIER          # QueueDeclaration
-                    | TAPE IDENTIFIER           # TapeDeclaration
+memory_declaration  : STACK IDENTIFIER          
+                    | QUEUE IDENTIFIER          
+                    | TAPE IDENTIFIER           
+                    | TAPE_2D IDENTIFIER        
                     ;
 
-logic_declaration   : identifer CLOSE_BRACKET commmand param_list (COMMA param_list)*
-                    | identifer CLOSE_BRACKET memory_operation param_list (COMMA param_list)*
-                    | identifer CLOSE_BRACKET move_over_tape param_list (COMMA param_list)*
+logic_declaration   : identifier CLOSE_BRACKET command transition (COMMA transition)*                 # CommandLogicDeclaration
+                    | identifier CLOSE_BRACKET memory_operation transition (COMMA transition)*         # MemoryOperationLogicDeclaration
+                    | identifier CLOSE_BRACKET tape_operation replacement (COMMA replacement)*         # MoveOverTapeLogicDeclaration
                     ;
 
-commmand    : SCAN
-            | PRINT
-            | SCAN_RIGHT
-            | SCAN_LEFT
+command    : SCAN                  # ScanCommand
+            | PRINT                 # PrintCommand
+            | SCAN_RIGHT            # ScanRightCommand
+            | SCAN_LEFT             # ScanLeftCommand
             ;
 
-memory_operation    : READ OPEN_PAR IDENTIFIER CLOSE_PAR
-                    | WRITE OPEN_PAR IDENTIFIER CLOSE_PAR
+memory_operation    : READ OPEN_PAR identifier CLOSE_PAR        
+                    | WRITE OPEN_PAR identifier CLOSE_PAR       
                     ;
 
-direction  : RIGHT
-            | LEFT
-            | UP
-            | DOWN
+tape_operation  : RIGHT OPEN_PAR identifier CLOSE_PAR              
+                | LEFT OPEN_PAR identifier CLOSE_PAR             
+                | UP OPEN_PAR identifier CLOSE_PAR                
+                | DOWN OPEN_PAR identifier CLOSE_PAR              
+                ;
+
+transition  : OPEN_PAR SYMBOL COMMA identifier CLOSE_PAR
             ;
 
-move_over_tape : direction OPEN_PAR IDENTIFIER CLOSE_PAR
-               ;
-
-replacement : SYMBOL SLASH SYMBOL
+replacement : OPEN_PAR SYMBOL SLASH SYMBOL COMMA identifier CLOSE_PAR
             ;
 
-param_list : OPEN_PAR SYMBOL COMMA identifer CLOSE_PAR 
-           | OPEN_PAR replacement COMMA identifer CLOSE_PAR
-           ;
