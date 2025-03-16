@@ -28,6 +28,7 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
         print("States:", self.states)
         print("Transitions:", self.transitions)
         print("Start State:", self.start_state)
+        print("Two-way:", self.is_two_way)
         
         active_states = {self.start_state}  # Start with the initial state
         current_state = self.start_state
@@ -43,7 +44,13 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
         while active_states: 
 
             if self.is_two_way:
-                pass
+                if input_pointer!=0 and input_string[input_pointer] == "#":
+                    if self.ACCEPT in active_states:
+                        print("\nInput accepted!")
+                        return True
+                    else:
+                        print("\nInput rejected!")
+                        return False
             else:
                 if input_pointer == len(input_string):
                     if self.ACCEPT in active_states:
@@ -62,29 +69,29 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
                     command = self.states[state]
 
                     # INPUT OPERATIONS
-                    if command in AbstractMachineLexer.symbolicNames[AbstractMachineParser.SCAN]:
+                    if command in self.get_lexer_name(AbstractMachineParser.SCAN):
                         symbol = input_string[input_pointer]
                         print(f"Reading Symbol: {symbol}")
                         input_pointer += 1
 
-                    elif command in AbstractMachineLexer.symbolicNames[AbstractMachineParser.SCAN_RIGHT]:
+                    elif command in self.get_lexer_name(AbstractMachineParser.SCAN_RIGHT):
                         input_pointer += 1
-                        symbol = input_string[input_pointer] if input_pointer < len(input_string) else "#"
+                        symbol = input_string[input_pointer]
                         print(f"Reading Symbol: {symbol}")
 
-                    elif command in AbstractMachineLexer.symbolicNames[AbstractMachineParser.SCAN_LEFT]:
+                    elif command in self.get_lexer_name(AbstractMachineParser.SCAN_LEFT):
                         input_pointer -= 1
                         if input_pointer >= 0:
-                            symbol = input_string[input_pointer] if input_pointer < len(input_string) else "#"
+                            symbol = input_string[input_pointer]
                             print(f"Reading Symbol: {symbol}")
 
 
                     # PRINT OPERATIONS
-                    elif command in AbstractMachineLexer.symbolicNames[AbstractMachineParser.PRINT]:
+                    elif command in self.get_lexer_name(AbstractMachineParser.PRINT):
                         pass
                     
                     # MEMORY OPERATIONS
-                    elif command in AbstractMachineLexer.symbolicNames[AbstractMachineParser.READ]:
+                    elif command in self.get_lexer_name(AbstractMachineParser.READ):
                         identifier = command.split("(")[1].rstrip(")")
                         memory = self.data_memory[identifier]
 
@@ -101,7 +108,7 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
                         else:
                             print(f"State {state} Action: {command} -> Stack {identifier} is empty!")
                     
-                    elif command in AbstractMachineLexer.symbolicNames[AbstractMachineParser.WRITE]:
+                    elif command in self.get_lexer_name(AbstractMachineParser.WRITE):
                         identifier = command.split("(")[1].rstrip(")")
                         memory = self.data_memory[identifier]
 
@@ -117,13 +124,13 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
                         print(f"State {state} Action: {command} -> Writing '{symbol}' to {identifier}")
                     
                     # TAPE OPERATIONS
-                    elif command in AbstractMachineLexer.symbolicNames[AbstractMachineParser.LEFT]:
+                    elif command in self.get_lexer_name(AbstractMachineParser.LEFT):
                         pass
-                    elif command in AbstractMachineLexer.symbolicNames[AbstractMachineParser.RIGHT]:
+                    elif command in self.get_lexer_name(AbstractMachineParser.RIGHT):
                         pass
-                    elif command in AbstractMachineLexer.symbolicNames[AbstractMachineParser.UP]:
+                    elif command in self.get_lexer_name(AbstractMachineParser.UP):
                         pass
-                    elif command in AbstractMachineLexer.symbolicNames[AbstractMachineParser.DOWN]:
+                    elif command in self.get_lexer_name(AbstractMachineParser.DOWN):
                         pass
 
                 # Determine possible next states
@@ -137,9 +144,16 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
                             next_active_states.add(next_state)
                     else:
                         next_active_states.update(transition_set)
+            
+            if next_active_states:
+                # Move to the next set of active states
+                active_states = next_active_states
+            else:
+                print("\nInput rejected!")
+                return False
 
-            # Move to the next set of active states
-            active_states = next_active_states
+    def get_lexer_name(self, index):
+        return AbstractMachineLexer.literalNames[index].strip("'")
 
     # DATA MEMORY TABLE OPERATIONS
     def declare_data_memory(self, name, value=None):
@@ -216,8 +230,10 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
         command = ctx.command().getText()
         self.states[state_identifier] = command
 
-        if command in [AbstractMachineLexer.symbolicNames[AbstractMachineParser.SCAN_LEFT],
-                       AbstractMachineLexer.symbolicNames[AbstractMachineParser.SCAN_RIGHT]]:
+        print(f"State {state_identifier} Command: {command}")
+        
+        if command in [self.get_lexer_name(AbstractMachineParser.SCAN_LEFT), 
+                       self.get_lexer_name(AbstractMachineParser.SCAN_RIGHT)]:
             self.is_two_way = True
 
         for i in ctx.transition():
