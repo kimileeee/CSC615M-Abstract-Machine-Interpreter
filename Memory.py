@@ -65,7 +65,7 @@ class Tape1D:
         return ''.join(self.tape.get(i, self.blank) for i in range(min_index, max_index + 1))
 
 class Tape2D:
-    def __init__(self, blank_symbol='_'):
+    def __init__(self, blank_symbol='#'):
         self.tape = {}  # Sparse representation
         self.head_x = 0
         self.head_y = 0

@@ -7,12 +7,6 @@ from datetime import *
 import argparse
 from tabulate import tabulate
 
-def run_interpreter(tree):
-    # Initialize the visitor
-    interpretor = AbstractMachineInterpreter()
-
-    # Visit the parse tree
-    interpretor.visit(tree)
 
 def check_lexer(tokens):
     lexer_bool = True
@@ -48,40 +42,31 @@ def main():
         source_code = file.read()
         print()
 
-        # Create an input stream for your source code
         input_stream = InputStream(source_code)
 
-        # Initialize the lexer with the input stream
         lexer = AbstractMachineLexer(input_stream)
-
-        # Create a token stream from the lexer
         token_stream = CommonTokenStream(lexer)
         token_stream.fill()
         # print_token_table(lexer, token_stream)
 
         # Check for lexer errors
         if check_lexer(token_stream.tokens):
-            # Initialize the parser with the token stream
             parser = AbstractMachineParser(token_stream)
-            # parser.removeErrorListeners()
-            # error_listener = BoardGameErrorListener()
-            # parser.addErrorListener(error_listener)
 
             try:
-                tree = parser.program()  # Replace `startRule` with your entry point rule
+                tree = parser.program()
             except Exception as e:
                 print(e)
 
-            run_interpreter(tree)
+            # Interpret source code
+            interpretor = AbstractMachineInterpreter()
+            interpretor.visit(tree)
 
-            # if len(error_listener.errors) == 0:
-            #     run_visitor(tree)
-            # else:
-            #     print("\nSyntax errors found. Please check your source code.")
+            input_string = input("\nInput: ")
+            interpretor.run_machine(input_string)
 
         else:
             print("\nLexical errors found. Please check your source code.")
-
 
 if __name__ == '__main__':
     main()
