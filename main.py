@@ -62,6 +62,8 @@ def main():
             interpretor = AbstractMachineInterpreter()
             interpretor.visit(tree)
 
+            interpretor.run_gui()
+
             input_string = input("\nInput: ")
             interpretor.run_machine(input_string)
 
