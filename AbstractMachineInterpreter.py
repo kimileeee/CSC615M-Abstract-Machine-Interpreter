@@ -9,6 +9,12 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
     ACCEPT = "accept"
     REJECT = "reject"
 
+    MACHINE_TYPE_FSM = "fsm"            # SCAN, PRINT
+    MACHINE_TYPE_FSA = "fsa"            # SCAN, ACCEPT/REJECT
+    MACHINE_TYPE_PDA = "pda"            # SCAN, READ, WRITE, ACCEPT/REJECT
+    MACHINE_TYPE_GST = "gst"            # SCAN, PRINT, READ, WRITE
+    MACHINE_TYPE_TURING = "turing"      # LEFT, RIGHT, UP, DOWN
+
     def __init__(self):
         super(AbstractMachineParserVisitor, self).__init__()
         self.data_memory = {}
@@ -16,6 +22,7 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
         self.transitions = {}
         self.start_state = None
         self.is_two_way = False
+        self.machine_type = None
 
         self.accept_states = []
         self.reject_states = []
@@ -24,6 +31,423 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
         self.input_tape = None
 
     def run_machine(self, input_string):
+        print("Machine Type:", self.machine_type)
+        print("States:", self.states)
+        print("Start State:", self.start_state)
+        print("Transitions:", self.transitions)
+        print("Data Memory:", self.data_memory)
+        print("Two-way:", self.is_two_way)
+        print()
+
+        if self.is_two_way:
+            if self.machine_type == self.MACHINE_TYPE_FSM:
+                self.run_fsm(input_string)
+            elif self.machine_type == self.MACHINE_TYPE_FSA:
+                self.run_fsa_two_way(input_string)
+            elif self.machine_type == self.MACHINE_TYPE_PDA:
+                self.run_pda_two_way(input_string)
+            elif self.machine_type == self.MACHINE_TYPE_GST:
+                self.run_gst_two_way(input_string)
+            elif self.machine_type == self.MACHINE_TYPE_TURING:
+                self.run_turing(input_string)
+        else:
+            if self.machine_type == self.MACHINE_TYPE_FSM:
+                self.run_fsm(input_string)
+            elif self.machine_type == self.MACHINE_TYPE_FSA:
+                self.run_fsa_one_way(input_string)
+            elif self.machine_type == self.MACHINE_TYPE_PDA:
+                self.run_pda_one_way(input_string)
+            elif self.machine_type == self.MACHINE_TYPE_GST:
+                self.run_gst_one_way(input_string)
+            elif self.machine_type == self.MACHINE_TYPE_TURING:
+                self.run_turing(input_string)
+
+    def run_fsm(self, input_string):
+        print("Running FSM")
+        active_states = {self.start_state}  # Start with the initial state
+        input_pointer = 0
+        output = ""
+
+        while input_pointer < len(input_string):
+            next_active_states = set()
+            symbol = input_string[input_pointer]
+
+            for state in active_states:
+                command = self.states[state]
+
+                if command in self.get_lexer_name(AbstractMachineParser.SCAN):
+                    print(f"Reading Symbol: {symbol}")
+                    input_pointer += 1
+
+                elif command in self.get_lexer_name(AbstractMachineParser.PRINT):
+                    output += symbol
+
+                if state in self.transitions and symbol in self.transitions[state]:
+                    next_active_states.update(self.transitions[state][symbol])
+
+            active_states = next_active_states
+
+        print(f"Output: {output}")
+
+    def run_fsa_one_way(self, input_string):
+        print("Running FSA One-Way")
+        active_states = {self.start_state}
+        input_pointer = 0
+
+        while input_pointer < len(input_string):
+            next_active_states = set()
+            symbol = input_string[input_pointer]
+
+            for state in active_states:
+                command = self.states[state]
+
+                print(f"\nCommand: {command}")
+
+                if command:
+                    # INPUT OPERATIONS
+                    if command in self.get_lexer_name(AbstractMachineParser.SCAN):
+                        print(f"Reading Symbol: {symbol}")
+                        input_pointer += 1
+                    
+                    elif command in self.get_lexer_name(AbstractMachineParser.SCAN_RIGHT):
+                        input_pointer += 1
+                        symbol = input_string[input_pointer]
+                        print(f"Reading Symbol: {symbol}")
+
+                    elif command in self.get_lexer_name(AbstractMachineParser.SCAN_LEFT):
+                        input_pointer -= 1
+                        if input_pointer >= 0:
+                            symbol = input_string[input_pointer]
+                            print(f"Reading Symbol: {symbol}")
+
+                    # PRINT OPERATIONS
+                    elif command in self.get_lexer_name(AbstractMachineParser.PRINT):
+                        symbol = next(iter(self.transitions[state]))
+                        output += symbol
+
+                        print(f"State {state} Action: {command} -> Writing '{symbol}' to {identifier}")
+                        print(f"Data Memory: {self.data_memory}")
+                    
+                    # MEMORY OPERATIONS
+                    elif self.get_lexer_name(AbstractMachineParser.READ) in command:
+                        identifier = command.split("(")[1].rstrip(")")
+                        memory = self.data_memory[identifier]
+
+                        if memory:
+                            if isinstance(memory, Stack):
+                                symbol = memory.pop()
+                            elif isinstance(memory, Queue):
+                                symbol = memory.dequeue()
+                            print(f"State {state} Action: {command} -> Read '{symbol}' from {identifier}")
+                            print(f"Data Memory: {self.data_memory}")
+                        else:
+                            print(f"State {state} Action: {command} -> Stack {identifier} is empty!")
+                            print(f"Data Memory: {self.data_memory}")
+                    
+                    elif self.get_lexer_name(AbstractMachineParser.WRITE) in command:
+                        identifier = command.split("(")[1].rstrip(")")
+                        memory = self.data_memory[identifier]
+                        symbol = next(iter(self.transitions[state]))
+
+                        if isinstance(memory, Stack):
+                            memory.push(symbol)
+                        elif isinstance(memory, Queue):
+                            memory.enqueue(symbol)
+
+                        print(f"State {state} Action: {command} -> Writing '{symbol}' to {identifier}")
+                        print(f"Data Memory: {self.data_memory}")
+
+                else: # command is none, meaning the state being processed is an accept or reject state
+                    pass
+
+                if state in self.transitions and symbol in self.transitions[state]:
+                    next_active_states.update(self.transitions[state][symbol])
+
+            active_states = next_active_states
+            print(f"Next Active States: {active_states}, {bool(active_states)}")
+            if not bool(active_states):
+                break
+
+        print(f"\nFinal Active States: {active_states}")
+        if self.ACCEPT in active_states:
+            print("\nInput accepted!")
+            return True
+        else:
+            print("\nInput rejected!")
+            return False
+
+    def run_fsa_two_way(self, input_string):
+        print("Running FSA Two-Way")
+        active_states = {self.start_state}
+        input_pointer = 0
+        input_string = "#" + input_string + "#"
+
+        while input_pointer < len(input_string):
+            next_active_states = set()
+            symbol = input_string[input_pointer]
+
+            for state in active_states:
+                command = self.states[state]
+
+                print(f"\nCommand: {command}")
+
+                if command:
+                    # INPUT OPERATIONS                    
+                    if command in self.get_lexer_name(AbstractMachineParser.SCAN_RIGHT):
+                        input_pointer += 1
+                        symbol = input_string[input_pointer]
+                        print(f"Reading Symbol: {symbol}")
+
+                    elif command in self.get_lexer_name(AbstractMachineParser.SCAN_LEFT):
+                        input_pointer -= 1
+                        if input_pointer >= 0:
+                            symbol = input_string[input_pointer]
+                            print(f"Reading Symbol: {symbol}")
+
+                    # PRINT OPERATIONS
+                    elif command in self.get_lexer_name(AbstractMachineParser.PRINT):
+                        symbol = next(iter(self.transitions[state]))
+                        output += symbol
+
+                        print(f"State {state} Action: {command} -> Writing '{symbol}' to {identifier}")
+                        print(f"Data Memory: {self.data_memory}")
+                    
+                    # MEMORY OPERATIONS
+                    elif self.get_lexer_name(AbstractMachineParser.READ) in command:
+                        identifier = command.split("(")[1].rstrip(")")
+                        memory = self.data_memory[identifier]
+
+                        if memory:
+                            if isinstance(memory, Stack):
+                                symbol = memory.pop()
+                            elif isinstance(memory, Queue):
+                                symbol = memory.dequeue()
+                            print(f"State {state} Action: {command} -> Read '{symbol}' from {identifier}")
+                            print(f"Data Memory: {self.data_memory}")
+                        else:
+                            print(f"State {state} Action: {command} -> Stack {identifier} is empty!")
+                            print(f"Data Memory: {self.data_memory}")
+                    
+                    elif self.get_lexer_name(AbstractMachineParser.WRITE) in command:
+                        identifier = command.split("(")[1].rstrip(")")
+                        memory = self.data_memory[identifier]
+                        symbol = next(iter(self.transitions[state]))
+
+                        if isinstance(memory, Stack):
+                            memory.push(symbol)
+                        elif isinstance(memory, Queue):
+                            memory.enqueue(symbol)
+
+                        print(f"State {state} Action: {command} -> Writing '{symbol}' to {identifier}")
+                        print(f"Data Memory: {self.data_memory}")
+
+                else: # command is none, meaning the state being processed is an accept or reject state
+                    pass
+
+                if state in self.transitions and symbol in self.transitions[state]:
+                    next_active_states.update(self.transitions[state][symbol])
+
+            active_states = next_active_states
+            print(f"Next Active States: {active_states}, {bool(active_states)}")
+            print(f"Input Pointer: {input_pointer}, Input Length: {len(input_string)}")
+
+            if self.ACCEPT in active_states:
+                print("\nInput accepted!")
+                return True
+            
+            if not bool(active_states): # No more next states
+                break
+
+        print(f"\nFinal Active States: {active_states}")
+        if self.ACCEPT in active_states:
+            print("\nInput accepted!")
+            return True
+        else:
+            print("\nInput rejected!")
+            return False
+
+    def run_pda_one_way(self, input_string):
+        print("Running PDA One-Way")
+        active_states = {self.start_state}
+        input_pointer = 0
+
+        input_string = input_string + "#"
+
+        while input_pointer < len(input_string) or not self.is_memory_empty():
+            next_active_states = set()
+            if input_pointer < len(input_string):
+                symbol = input_string[input_pointer]
+
+            for state in active_states:
+                command = self.states[state]
+
+                print(f"\nCommand: {command}")
+
+                if command:
+                    # INPUT OPERATIONS
+                    if command in self.get_lexer_name(AbstractMachineParser.SCAN):
+                        print(f"Scanning Symbol: {symbol}")
+                        input_pointer += 1
+
+                    # PRINT OPERATIONS
+                    elif command in self.get_lexer_name(AbstractMachineParser.PRINT):
+                        symbol = next(iter(self.transitions[state]))
+                        output += symbol
+
+                        print(f"Writing '{symbol}' to {identifier}")
+                        print(f"Data Memory: {self.data_memory}")
+                    
+                    # MEMORY OPERATIONS
+                    elif self.get_lexer_name(AbstractMachineParser.READ) in command:
+                        identifier = command.split("(")[1].rstrip(")")
+                        memory = self.data_memory[identifier]
+
+                        if memory:
+                            if isinstance(memory, Stack):
+                                symbol = memory.pop()
+                            elif isinstance(memory, Queue):
+                                symbol = memory.dequeue()
+                            print(f"Reading '{symbol}' from {identifier}")
+                            print(f"Data Memory: {self.data_memory}")
+                        else:
+                            print(f"Reading, stack {identifier} is empty!")
+                            print(f"Data Memory: {self.data_memory}")
+                    
+                    elif self.get_lexer_name(AbstractMachineParser.WRITE) in command:
+                        identifier = command.split("(")[1].rstrip(")")
+                        memory = self.data_memory[identifier]
+                        symbol = next(iter(self.transitions[state]))
+
+                        if isinstance(memory, Stack):
+                            memory.push(symbol)
+                        elif isinstance(memory, Queue):
+                            memory.enqueue(symbol)
+
+                        print(f"State {state} Action: {command} -> Writing '{symbol}' to {identifier}")
+                        print(f"Data Memory: {self.data_memory}")
+
+                else: # command is none, meaning the state being processed is an accept or reject state
+                    pass
+
+                if state in self.transitions and symbol in self.transitions[state]:
+                    next_active_states.update(self.transitions[state][symbol])
+
+            active_states = next_active_states
+            print(f"Next Active States: {active_states}, {bool(active_states)}")
+            print(f"Is Memory Empty: {self.is_memory_empty()}")
+            if not bool(active_states):
+                break
+
+        print(f"\nFinal Active States: {active_states}")
+        if self.ACCEPT in active_states:
+            print("\nInput accepted!")
+            return True
+        else:
+            print("\nInput rejected!")
+            return False
+    
+    def run_pda_two_way(self, input_string):
+        print("Running PDA Two-Way")
+        active_states = {self.start_state}
+        input_pointer = 0
+
+        input_string = "#" + input_string + "#"
+
+        while input_pointer < len(input_string) or not self.is_memory_empty():
+            next_active_states = set()
+            if input_pointer < len(input_string):
+                symbol = input_string[input_pointer]
+
+            for state in active_states:
+                command = self.states[state]
+
+                print(f"\nCommand: {command}")
+
+                if command:
+                    # INPUT OPERATIONS
+                    if command in self.get_lexer_name(AbstractMachineParser.SCAN_RIGHT):
+                        input_pointer += 1
+                        symbol = input_string[input_pointer]
+                        print(f"Reading Symbol: {symbol}")
+
+                    elif command in self.get_lexer_name(AbstractMachineParser.SCAN_LEFT):
+                        input_pointer -= 1
+                        if input_pointer >= 0:
+                            symbol = input_string[input_pointer]
+                            print(f"Reading Symbol: {symbol}")
+
+                    # PRINT OPERATIONS
+                    elif command in self.get_lexer_name(AbstractMachineParser.PRINT):
+                        symbol = next(iter(self.transitions[state]))
+                        output += symbol
+
+                        print(f"Writing '{symbol}' to {identifier}")
+                        print(f"Data Memory: {self.data_memory}")
+                    
+                    # MEMORY OPERATIONS
+                    elif self.get_lexer_name(AbstractMachineParser.READ) in command:
+                        identifier = command.split("(")[1].rstrip(")")
+                        memory = self.data_memory[identifier]
+
+                        if memory:
+                            if isinstance(memory, Stack):
+                                symbol = memory.pop()
+                            elif isinstance(memory, Queue):
+                                symbol = memory.dequeue()
+                            print(f"Reading '{symbol}' from {identifier}")
+                            print(f"Data Memory: {self.data_memory}")
+                        else:
+                            print(f"Reading, stack {identifier} is empty!")
+                            print(f"Data Memory: {self.data_memory}")
+                    
+                    elif self.get_lexer_name(AbstractMachineParser.WRITE) in command:
+                        identifier = command.split("(")[1].rstrip(")")
+                        memory = self.data_memory[identifier]
+                        symbol = next(iter(self.transitions[state]))
+
+                        if isinstance(memory, Stack):
+                            memory.push(symbol)
+                        elif isinstance(memory, Queue):
+                            memory.enqueue(symbol)
+
+                        print(f"State {state} Action: {command} -> Writing '{symbol}' to {identifier}")
+                        print(f"Data Memory: {self.data_memory}")
+
+                else: # command is none, meaning the state being processed is an accept or reject state
+                    pass
+
+                if state in self.transitions and symbol in self.transitions[state]:
+                    next_active_states.update(self.transitions[state][symbol])
+
+            active_states = next_active_states
+            print(f"Next Active States: {active_states}, {bool(active_states)}")
+            print(f"Is Memory Empty: {self.is_memory_empty()}")
+
+            # if self.ACCEPT in active_states:
+            #     print("\nInput accepted!")
+            #     return True
+            
+            if not bool(active_states):
+                break
+
+        print(f"\nFinal Active States: {active_states}")
+        if self.ACCEPT in active_states:
+            print("\nInput accepted!")
+            return True
+        else:
+            print("\nInput rejected!")
+            return False
+
+    def run_gst_one_way(self, input_string):
+        print("Running GST One-Way")
+
+    def run_gst_two_way(self, input_string):
+        print("Running GST Two-Way")
+
+    def run_turing(self, input_string):
+        print("Running Turing Machine")
+
+    def run_machine1(self, input_string):
         print("Data Memory:", self.data_memory)
         print("States:", self.states)
         print("Transitions:", self.transitions)
@@ -33,32 +457,18 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
         active_states = {self.start_state}  # Start with the initial state
         current_state = self.start_state
         input_pointer = 0
+        output = ""
 
         if self.is_two_way:
             input_string = "#" + input_string + "#"
+        elif self.data_memory:
+            input_string = input_string + "#"
 
         print(f"Input: {input_string}")
         print(f"Start State: {current_state}")
 
         # while current_state not in [self.ACCEPT, self.REJECT]:
         while active_states: 
-
-            if self.is_two_way:
-                if input_pointer!=0 and input_string[input_pointer] == "#":
-                    if self.ACCEPT in active_states:
-                        print("\nInput accepted!")
-                        return True
-                    else:
-                        print("\nInput rejected!")
-                        return False
-            else:
-                if input_pointer == len(input_string):
-                    if self.ACCEPT in active_states:
-                        print("\nInput accepted!")
-                        return True
-                    else:
-                        print("\nInput rejected!")
-                        return False
             
             next_active_states = set()
         
@@ -88,10 +498,14 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
 
                     # PRINT OPERATIONS
                     elif command in self.get_lexer_name(AbstractMachineParser.PRINT):
-                        pass
+                        symbol = next(iter(self.transitions[state]))
+                        output += symbol
+
+                        print(f"State {state} Action: {command} -> Writing '{symbol}' to {identifier}")
+                        print(f"Data Memory: {self.data_memory}")
                     
                     # MEMORY OPERATIONS
-                    elif command in self.get_lexer_name(AbstractMachineParser.READ):
+                    elif self.get_lexer_name(AbstractMachineParser.READ) in command:
                         identifier = command.split("(")[1].rstrip(")")
                         memory = self.data_memory[identifier]
 
@@ -105,12 +519,15 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
                             elif isinstance(memory, Tape2D):
                                 symbol = memory.read()
                             print(f"State {state} Action: {command} -> Read '{symbol}' from {identifier}")
+                            print(f"Data Memory: {self.data_memory}")
                         else:
                             print(f"State {state} Action: {command} -> Stack {identifier} is empty!")
+                            print(f"Data Memory: {self.data_memory}")
                     
-                    elif command in self.get_lexer_name(AbstractMachineParser.WRITE):
+                    elif self.get_lexer_name(AbstractMachineParser.WRITE) in command:
                         identifier = command.split("(")[1].rstrip(")")
                         memory = self.data_memory[identifier]
+                        symbol = next(iter(self.transitions[state]))
 
                         if isinstance(memory, Stack):
                             memory.push(symbol)
@@ -122,15 +539,16 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
                             memory.write(symbol)
 
                         print(f"State {state} Action: {command} -> Writing '{symbol}' to {identifier}")
+                        print(f"Data Memory: {self.data_memory}")
                     
                     # TAPE OPERATIONS
-                    elif command in self.get_lexer_name(AbstractMachineParser.LEFT):
+                    elif self.get_lexer_name(AbstractMachineParser.LEFT) in command:
                         pass
-                    elif command in self.get_lexer_name(AbstractMachineParser.RIGHT):
+                    elif self.get_lexer_name(AbstractMachineParser.RIGHT) in command:
                         pass
-                    elif command in self.get_lexer_name(AbstractMachineParser.UP):
+                    elif self.get_lexer_name(AbstractMachineParser.UP) in command:
                         pass
-                    elif command in self.get_lexer_name(AbstractMachineParser.DOWN):
+                    elif self.get_lexer_name(AbstractMachineParser.DOWN) in command:
                         pass
 
                 # Determine possible next states
@@ -138,20 +556,50 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
                 print(f"Symbol: {symbol}")
                 if state in self.transitions and symbol in self.transitions[state]:
                     transition_set = self.transitions[state][symbol]
-                    print(f"Transition set: {transition_set}")
                     if transition_set and isinstance(next(iter(transition_set)), tuple):
                         for symbol_replace, next_state in transition_set:
                             next_active_states.add(next_state)
                     else:
                         next_active_states.update(transition_set)
             
+            print(f"Next Active States: {next_active_states}")
             if next_active_states:
                 # Move to the next set of active states
                 active_states = next_active_states
             else:
                 print("\nInput rejected!")
                 return False
+            
+            if self.is_two_way:
+                if input_pointer!=0 and input_string[input_pointer] == "#":
+                    if self.ACCEPT in active_states:
+                        print("\nInput accepted!")
+                        return True
+                    else:
+                        print("\nInput rejected!")
+                        return False
+            else:
+                print(f"Input Pointer: {input_pointer}, Input Length: {len(input_string)}")
+                if input_pointer == len(input_string):
+                    if self.ACCEPT in active_states:
+                        if self.data_memory:
+                            if all(len(mem) == 0 for mem in self.data_memory):
+                                print("\nInput accepted!")
+                                return True
+                        else:
+                            print("\nInput accepted!")
+                            return True
+                    else:
+                        if all(self.get_lexer_name(AbstractMachineParser.SCAN) in self.states[state] 
+                               for state in active_states):
+                            print("\nInput rejected!")
+                            return False
+                    
+        if output:
+            print(f"Output: {output}")
 
+
+    ########
     def get_lexer_name(self, index):
         return AbstractMachineLexer.literalNames[index].strip("'")
 
@@ -188,6 +636,23 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
 
         print(tabulate(table_data, headers=["State"] + symbols, tablefmt="pretty"))
 
+    def set_machine_type(self):
+        if any((isinstance(memory, Tape1D) or isinstance(memory, Tape2D)) for memory in self.data_memory.values()):
+            self.machine_type = self.MACHINE_TYPE_TURING
+        elif self.data_memory: # Has memory but no tape
+            if any(state in [self.ACCEPT, self.REJECT] for state in self.states):
+                self.machine_type = self.MACHINE_TYPE_PDA
+            else:
+                self.machine_type = self.MACHINE_TYPE_GST
+        else: # No memory, finite state machine
+            if any(state in [self.ACCEPT, self.REJECT] for state in self.states):
+                self.machine_type = self.MACHINE_TYPE_FSA
+            else:
+                self.machine_type = self.MACHINE_TYPE_FSM
+
+    def is_memory_empty(self):
+        return all(mem.is_empty() for mem in self.data_memory.values())
+    
     # VISITOR METHODS
     ## START
     def visitFullProgram(self, ctx:AbstractMachineParser.FullProgramContext):
@@ -197,6 +662,7 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
 
         self.visitChildren(ctx)
         print(self.transitions)
+        self.set_machine_type()
         self.print_machine()
 
     ## MEMORY DECLARATION
@@ -262,6 +728,7 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
     def visitMoveOverTapeLogicDeclaration(self, ctx:AbstractMachineParser.MoveOverTapeLogicDeclarationContext):
         print ("in tape logic declaration")
         state_identifier = ctx.identifier().getText()
+
         if self.start_state is None:
             self.start_state = state_identifier
 
