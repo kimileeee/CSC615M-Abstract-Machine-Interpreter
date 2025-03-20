@@ -62,10 +62,10 @@ def main():
             interpretor = AbstractMachineInterpreter()
             interpretor.visit(tree)
 
-            # interpretor.run_gui()
+            interpretor.run_gui()
 
-            input_string = input("\nInput: ")
-            interpretor.run_machine(input_string)
+            # input_string = input("\nInput: ")
+            # print(interpretor.run_machine(input_string))
 
         else:
             print("\nLexical errors found. Please check your source code.")

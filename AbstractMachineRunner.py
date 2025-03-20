@@ -66,7 +66,7 @@ class AbstractMachineRunner():
 
             active_states = next_active_states
 
-        print(f"Output: {output}")
+        return output
 
     def run_fsa_one_way(self, input_string):
         print("Running FSA One-Way")
@@ -149,10 +149,10 @@ class AbstractMachineRunner():
 
         print(f"\nFinal Active States: {active_states}")
         if self.machine.ACCEPT in active_states:
-            print("\nInput accepted!")
+            return "\nInput accepted!"
             return True
         else:
-            print("\nInput rejected!")
+            return "\nInput rejected!"
             return False
 
     def run_fsa_two_way(self, input_string):
@@ -231,7 +231,7 @@ class AbstractMachineRunner():
             print(f"Input Pointer: {input_pointer}, Input Length: {len(input_string)}")
 
             if self.machine.ACCEPT in active_states:
-                print("\nInput accepted!")
+                return "\nInput accepted!"
                 return True
             
             if not bool(active_states): # No more next states
@@ -239,10 +239,10 @@ class AbstractMachineRunner():
 
         print(f"\nFinal Active States: {active_states}")
         if self.machine.ACCEPT in active_states:
-            print("\nInput accepted!")
+            return "\nInput accepted!"
             return True
         else:
-            print("\nInput rejected!")
+            return "\nInput rejected!"
             return False
 
     def run_pda_one_way(self, input_string):
@@ -318,11 +318,12 @@ class AbstractMachineRunner():
                 break
 
         print(f"\nFinal Active States: {active_states}")
+        print(f"\nFinal Active States: {active_states}")
         if self.machine.ACCEPT in active_states:
-            print("\nInput accepted!")
+            return "\nInput accepted!"
             return True
         else:
-            print("\nInput rejected!")
+            return "\nInput rejected!"
             return False
     
     def run_pda_two_way(self, input_string):
@@ -403,7 +404,7 @@ class AbstractMachineRunner():
             print(f"Is Memory Empty: {self.machine.is_memory_empty()}")
 
             if self.machine.ACCEPT in active_states:
-                print("\nInput accepted!")
+                return "\nInput accepted!"
                 return True
             
             if not bool(active_states):
@@ -411,10 +412,10 @@ class AbstractMachineRunner():
 
         print(f"\nFinal Active States: {active_states}")
         if self.machine.ACCEPT in active_states:
-            print("\nInput accepted!")
+            return "\nInput accepted!"
             return True
         else:
-            print("\nInput rejected!")
+            return "\nInput rejected!"
             return False
 
     # TODO: Implement these methods
@@ -426,3 +427,4 @@ class AbstractMachineRunner():
 
     def run_turing(self, input_string):
         print("Running Turing Machine")
+        

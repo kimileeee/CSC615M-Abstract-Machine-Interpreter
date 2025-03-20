@@ -6,9 +6,14 @@ import tkinter as tk
 import math
 
 class AbstractMachineGUI():
+
+    WINDOW_TITLE = "FSM Visualization"
+    WINDOW_WIDTH = 1000
+    WINDOW_HEIGHT = 600
     CANVAS_WIDTH = 800
     CANVAS_HEIGHT = 600
     RADIUS = 20
+    ARC_OFFSET_SELF_LOOP = 50
     ARC_OFFSET = 40
     LABEL_SPACING = 15 
 
@@ -18,9 +23,31 @@ class AbstractMachineGUI():
         self.drag_data = {"state": None, "x": 0, "y": 0}
 
         self.root = tk.Tk()
-        self.root.title("FSM Visualization")
+        self.root.title(self.WINDOW_TITLE)
+
         self.canvas = tk.Canvas(self.root, width=self.CANVAS_WIDTH, height=self.CANVAS_HEIGHT, bg="white")
-        self.canvas.pack()
+        self.canvas.pack(side=tk.LEFT, fill=tk.Y)
+
+        self.menu_frame = tk.Frame(self.root, width=self.WINDOW_WIDTH - self.CANVAS_WIDTH, height=self.WINDOW_HEIGHT)
+        self.menu_frame.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        menu_label = tk.Label(self.menu_frame, text="Menu")
+        menu_label.pack()
+
+        tk.Label(self.menu_frame, text="Input:").pack()
+
+        input_entry = tk.Entry(self.menu_frame)
+        input_entry.pack()
+
+        tk.Label(self.menu_frame, text="Output:").pack()
+        self.output = tk.StringVar()
+        self.output_label = tk.Label(self.menu_frame, textvariable=self.output)
+        self.output_label.pack()
+
+        run_button = tk.Button(self.menu_frame, text="Run", command=lambda: self.run_machine(input_entry.get()))
+        run_button.pack()
+
+
 
         center_x = self.CANVAS_WIDTH // 2
         center_y = self.CANVAS_HEIGHT // 2
@@ -40,6 +67,11 @@ class AbstractMachineGUI():
                 self.draw_state(state, (x, y))
 
         self.redraw_transitions()
+
+    def run_machine(self, input_string):
+        output = self.machine.run_machine(input_string.strip("\n"))
+        print(output)
+        self.output.set(output)
 
     def run(self):
         self.root.mainloop()

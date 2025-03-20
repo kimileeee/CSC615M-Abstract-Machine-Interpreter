@@ -43,8 +43,8 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
         AbstractMachineGUI(self).run()
 
     def run_machine(self, input_string):
-        AbstractMachineRunner(self).run(input_string)
-
+        runner = AbstractMachineRunner(self)
+        return runner.run(input_string)
 
     ########
     def get_lexer_name(self, index):

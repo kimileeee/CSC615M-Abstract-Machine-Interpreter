@@ -43,6 +43,10 @@ class Tape1D:
         self.tape = {}  # Sparse representation
         self.head = 0
         self.blank = blank_symbol
+
+    def input_tape(self, input_string):
+        for i, symbol in enumerate(input_string):
+            self.tape[i] = symbol
     
     def read(self):
         return self.tape.get(self.head, self.blank)
