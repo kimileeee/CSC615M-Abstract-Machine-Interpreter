@@ -44,11 +44,28 @@ class AbstractMachineGUI():
         self.output_label = tk.Label(self.menu_frame, textvariable=self.output)
         self.output_label.pack()
 
+        self.steps_btn_frame = tk.Frame(self.menu_frame)
+        self.steps_btn_frame.pack()
+
+        next_button = tk.Button(self.steps_btn_frame, text="Next", command=lambda: self.run_machine(input_entry.get()))
+        next_button.pack(side=tk.RIGHT)
+        prev_button = tk.Button(self.steps_btn_frame, text="Prev", command=lambda: self.run_machine(input_entry.get()))
+        prev_button.pack(side=tk.LEFT)
+
         run_button = tk.Button(self.menu_frame, text="Run", command=lambda: self.run_machine(input_entry.get()))
         run_button.pack()
 
+        self.draw_state_diagram()
 
+    def run_machine(self, input_string):
+        output_val = self.machine.run_machine(input_string.strip("\n"))
+        print(output_val)
+        self.output.set(output_val)
 
+    def run(self):
+        self.root.mainloop()
+
+    def draw_state_diagram(self):
         center_x = self.CANVAS_WIDTH // 2
         center_y = self.CANVAS_HEIGHT // 2
         layout_radius = min(self.CANVAS_WIDTH, self.CANVAS_HEIGHT) // 2 - 50
@@ -67,14 +84,6 @@ class AbstractMachineGUI():
                 self.draw_state(state, (x, y))
 
         self.redraw_transitions()
-
-    def run_machine(self, input_string):
-        output = self.machine.run_machine(input_string.strip("\n"))
-        print(output)
-        self.output.set(output)
-
-    def run(self):
-        self.root.mainloop()
 
     def draw_state(self, state, pos, type="normal"):
         x, y = pos
