@@ -1,0 +1,13 @@
+.DATA
+QUEUE Q1
+
+.LOGIC
+A] SCAN (a,B), (b,C)
+B] WRITE(Q1) (X,A)
+C] READ(Q1) (X,D)
+D] WRITE(Q1) (Y,E)
+E] SCAN (b,C), (c,F)
+F] WRITE(Q1) (#,G)
+G] READ(Q1) (Y,H)
+H] SCAN (c,G), (#,I)
+I] READ(Q1) (#, accept) 
