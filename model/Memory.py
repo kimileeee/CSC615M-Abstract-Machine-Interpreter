@@ -44,9 +44,14 @@ class Tape1D:
         self.head = 0
         self.blank = blank_symbol
 
-    def input_tape(self, input_string):
+    def initialize_input(self, input_string):
+        self.tape = {}
+        self.tape[0] = self.blank
         for i, symbol in enumerate(input_string):
-            self.tape[i] = symbol
+            self.tape[i + 1] = symbol
+        self.tape[len(input_string) + 1] = self.blank
+
+        self.head = 0  
     
     def read(self):
         return self.tape.get(self.head, self.blank)
@@ -57,8 +62,9 @@ class Tape1D:
         else:
             self.tape[self.head] = symbol
     
-    def move_left(self):
+    def move_left(self, symbol=None):
         self.head -= 1
+        
     
     def move_right(self):
         self.head += 1
@@ -74,6 +80,16 @@ class Tape2D:
         self.head_x = 0
         self.head_y = 0
         self.blank = blank_symbol
+
+    def initialize_input(self, input_string):
+        self.tape = {}
+        self.tape[0] = self.blank
+        for i, symbol in enumerate(input_string):
+            self.tape[i + 1] = symbol
+        self.tape[len(input_string) + 1] = self.blank
+
+        self.head_x = 0
+        self.head_y = 0  
     
     def read(self):
         return self.tape.get((self.head_x, self.head_y), self.blank)

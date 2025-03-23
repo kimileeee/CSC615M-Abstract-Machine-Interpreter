@@ -1,11 +1,11 @@
 from automata.AbstractMachineLexer import AbstractMachineLexer
 from automata.AbstractMachineParser import AbstractMachineParser
 from automata.AbstractMachineParserVisitor import AbstractMachineParserVisitor
-from Memory import Stack, Queue, Tape1D, Tape2D
-from AbstractMachineUtils import AbstractMachineUtils
-from AbstractMachineGUI import AbstractMachineGUI
-from AbstractMachineModel import AbstractMachineModel
-from AbstractMachineRunner import AbstractMachineRunner
+from model.Memory import Stack, Queue, Tape1D, Tape2D
+from model.AbstractMachineUtils import AbstractMachineUtils
+from gui.AbstractMachineGUI import AbstractMachineGUI
+from model.AbstractMachineModel import AbstractMachineModel
+import copy
 
 class AbstractMachineInterpreter(AbstractMachineParserVisitor):
 
@@ -25,6 +25,7 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
     def visitFullProgram(self, ctx:AbstractMachineParser.FullProgramContext):
         self.visitChildren(ctx)
         
+        self.machine.machine_initial = copy.deepcopy(self.machine)
         self.machine.print_machine()
         self.initialize_gui()
         self.run_gui()
@@ -50,7 +51,7 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
     
     ## LOGIC DECLARATIONS
     def visitCommandLogicDeclaration(self, ctx:AbstractMachineParser.CommandLogicDeclarationContext):
-        print ("in command logic declaration")
+        # print ("in command logic declaration")
         state_identifier = ctx.identifier().getText()
         
         self.machine.set_start_state(state_identifier)
@@ -58,7 +59,7 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
         command = ctx.command().getText()
         self.machine.states[state_identifier] = command
 
-        print(f"State {state_identifier} Command: {command}")
+        # print(f"State {state_identifier} Command: {command}")
         
         if command in [AbstractMachineUtils.SCAN_LEFT, AbstractMachineUtils.SCAN_RIGHT]:
             self.machine.is_two_way = True
@@ -71,7 +72,7 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
                 self.machine.transitions[state] = {}
 
     def visitMemoryOperationLogicDeclaration(self, ctx:AbstractMachineParser.MemoryOperationLogicDeclarationContext):
-        print ("in read write logic declaration")
+        # print ("in read write logic declaration")
         state_identifier = ctx.identifier().getText()
         
         self.machine.set_start_state(state_identifier)
@@ -87,7 +88,7 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
                 self.machine.transitions[state] = {}
 
     def visitMoveOverTapeLogicDeclaration(self, ctx:AbstractMachineParser.MoveOverTapeLogicDeclarationContext):
-        print ("in tape logic declaration")
+        # print ("in tape logic declaration")
         state_identifier = ctx.identifier().getText()
 
         self.machine.set_start_state(state_identifier)

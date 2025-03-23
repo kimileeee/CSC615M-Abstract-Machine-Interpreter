@@ -1,11 +1,12 @@
 from automata.AbstractMachineLexer import AbstractMachineLexer
 from automata.AbstractMachineParser import AbstractMachineParser
-from Memory import Stack, Queue, Tape1D, Tape2D
+from model.Memory import Stack, Queue, Tape1D, Tape2D
 from tabulate import tabulate
-from AbstractMachineUtils import AbstractMachineUtils
+from model.AbstractMachineUtils import AbstractMachineUtils
 
 class AbstractMachineModel():
     def __init__(self):
+        self.machine_initial = None
         self.data_memory = {}
         self.states = {}
         self.transitions = {}
@@ -20,6 +21,18 @@ class AbstractMachineModel():
         self.pointer = 0
         self.current_state = None
         self.history = []
+
+    def reset(self):
+        self.data_memory = self.machine_initial.data_memory
+        self.states = self.machine_initial.states
+        self.transitions = self.machine_initial.transitions
+        self.start_state = self.machine_initial.start_state
+        self.is_two_way = self.machine_initial.is_two_way
+        self.input_tape = self.machine_initial.input_tape
+        self.input_string = self.machine_initial.input_string
+        self.pointer = self.machine_initial.pointer
+        self.current_state = self.machine_initial.current_state
+        self.history = self.machine_initial.history
 
     # GETTERS AND SETTERS
     def add_data_memory(self, name, value=None):
@@ -83,27 +96,11 @@ class AbstractMachineModel():
         print(tabulate(table_data, headers=["State"] + symbols, tablefmt="pretty"))
 
 
-
-
-    def run_machine(self, input_string=""):
-        """
-        Runs the machine until it reaches the accept state or an error occurs.
-        Returns a final status message.
-        """
-        # Initialize simulation.
-        status = self.initialize(input_string)
-        # Continue stepping until accept or error.
-        while self.current_state != AbstractMachineUtils.ACCEPT:
-            result = self.next_step()
-            # If an error is encountered, break.
-            if result.startswith("Error"):
-                return result
-        return f"Accepted: final state {self.current_state}"
+    # MACHINE OPERATIONS
     
     def initialize(self, input_string):
-        if self.input_tape is None:
-            # TODO: load input string to input tape
-            pass
+        if self.input_tape:
+            self.input_tape.initialize_input(input_string)
         
         if self.is_two_way:
             input_string = "#" + input_string + "#"
@@ -146,7 +143,8 @@ class AbstractMachineModel():
         possible = state_transitions.get(symbol)
         if not possible:
             # TODO: if deterministic, should return rejected here, but if nondeterministic, should stop exploring this path
-            return f"Error: No transition from state {self.current_state} on symbol '{symbol}'."
+            # return f"Error: No transition from state {self.current_state} on symbol '{symbol}'."
+            return f"REJECTED"
         
         # Choose a transition (for nondeterminism, extend as needed).
         next_transition = next(iter(possible))
