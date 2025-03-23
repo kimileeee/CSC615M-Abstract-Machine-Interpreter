@@ -1,7 +1,4 @@
-from automata.AbstractMachineLexer import AbstractMachineLexer
-from automata.AbstractMachineParser import AbstractMachineParser
-from automata.AbstractMachineParserVisitor import AbstractMachineParserVisitor
-from Memory import Stack, Queue, Tape1D, Tape2D
+from AbstractMachineUtils import AbstractMachineUtils
 import tkinter as tk
 import math
 
@@ -10,12 +7,13 @@ class AbstractMachineGUI():
     WINDOW_TITLE = "FSM Visualization"
     WINDOW_WIDTH = 1000
     WINDOW_HEIGHT = 600
-    CANVAS_WIDTH = 800
+    CANVAS_WIDTH = 600
     CANVAS_HEIGHT = 600
     RADIUS = 20
     ARC_OFFSET_SELF_LOOP = 50
     ARC_OFFSET = 40
     LABEL_SPACING = 15 
+    STEP_DELAY = 1000
 
     def __init__(self, machine):
         self.machine = machine
@@ -25,42 +23,93 @@ class AbstractMachineGUI():
         self.root = tk.Tk()
         self.root.title(self.WINDOW_TITLE)
 
+        # Canvas for state diagram
         self.canvas = tk.Canvas(self.root, width=self.CANVAS_WIDTH, height=self.CANVAS_HEIGHT, bg="white")
         self.canvas.pack(side=tk.LEFT, fill=tk.Y)
 
+        # Frame for menu
         self.menu_frame = tk.Frame(self.root, width=self.WINDOW_WIDTH - self.CANVAS_WIDTH, height=self.WINDOW_HEIGHT)
         self.menu_frame.pack(side=tk.RIGHT, fill=tk.Y)
         
-        menu_label = tk.Label(self.menu_frame, text="Menu")
-        menu_label.pack()
+        tk.Label(self.menu_frame, text="Menu").pack(pady=5)
 
+        # Input and output
         tk.Label(self.menu_frame, text="Input:").pack()
-
-        input_entry = tk.Entry(self.menu_frame)
-        input_entry.pack()
+        self.input_entry = tk.Entry(self.menu_frame)
+        self.input_entry.pack()
 
         tk.Label(self.menu_frame, text="Output:").pack()
         self.output = tk.StringVar()
         self.output_label = tk.Label(self.menu_frame, textvariable=self.output)
-        self.output_label.pack()
+        self.output_label.pack(pady=5)
 
+        # Display input with pointer indicator.
+        tk.Label(self.menu_frame, text="Input Trace:").pack()
+        self.tape_label = tk.Label(self.menu_frame, text="", font=("Arial", 12))
+        self.tape_label.pack(pady=5)
+
+        # Buttons for stepping
         self.steps_btn_frame = tk.Frame(self.menu_frame)
-        self.steps_btn_frame.pack()
+        self.steps_btn_frame.pack(pady=10)
 
-        next_button = tk.Button(self.steps_btn_frame, text="Next", command=lambda: self.run_machine(input_entry.get()))
-        next_button.pack(side=tk.RIGHT)
-        prev_button = tk.Button(self.steps_btn_frame, text="Prev", command=lambda: self.run_machine(input_entry.get()))
-        prev_button.pack(side=tk.LEFT)
+        prev_button = tk.Button(self.steps_btn_frame, text="Prev", command=self.prev_step)
+        prev_button.pack(side=tk.LEFT, padx=5)
+        next_button = tk.Button(self.steps_btn_frame, text="Next", command=self.next_step)
+        next_button.pack(side=tk.RIGHT, padx=5)
 
-        run_button = tk.Button(self.menu_frame, text="Run", command=lambda: self.run_machine(input_entry.get()))
-        run_button.pack()
+        # Buttons for full run
+        run_button = tk.Button(self.menu_frame, text="Run", command=self.start_run)
+        run_button.pack(pady=5)
+        stop_button = tk.Button(self.menu_frame, text="Stop", command=self.stop_run)
+        stop_button.pack(pady=5)
 
         self.draw_state_diagram()
+        self.update_state_indicator()
+        self.update_input_display()
 
-    def run_machine(self, input_string):
-        output_val = self.machine.run_machine(input_string.strip("\n"))
-        print(output_val)
-        self.output.set(output_val)
+    def start_run(self):
+        # Initialize machine simulation (backend) with the input.
+        self.machine.initialize(self.input_entry.get().strip("\n"))
+        self.update_state_indicator()
+        self.update_input_display()
+        self.running = True
+        # Delay the first auto-step so that the starting state A is shown for a moment.
+        self.root.after(self.STEP_DELAY, self.auto_step)
+
+    def stop_run(self):
+        self.running = False
+
+    def auto_step(self):
+        if self.running and self.machine.current_state != AbstractMachineUtils.ACCEPT:
+            self.next_step()
+            if self.running:
+                self.root.after(self.STEP_DELAY, self.auto_step)
+
+    def next_step(self):
+        result = self.machine.next_step()
+        self.output.set(result)
+        self.update_state_indicator()
+        self.update_input_display()
+
+    def prev_step(self):
+        result = self.machine.prev_step()
+        self.output.set(result)
+        self.update_state_indicator()
+        self.update_input_display()
+    
+    def update_input_display(self):
+        """
+        Update the tape display with the pointer highlighted.
+        For simplicity, the pointer letter is wrapped in square brackets.
+        """
+        tape = self.machine.input_string
+        pointer = self.machine.pointer
+        if pointer < len(tape):
+            highlighted = tape[:pointer] + "[" + tape[pointer] + "]" + tape[pointer+1:]
+        else:
+            # When pointer is at the end, indicate position with empty brackets.
+            highlighted = tape + " []"
+        self.tape_label.config(text=highlighted)
 
     def run(self):
         self.root.mainloop()
@@ -78,7 +127,7 @@ class AbstractMachineGUI():
 
             if state == self.machine.start_state:
                 self.draw_state(state, (x, y), "start")
-            elif state == self.machine.ACCEPT:
+            elif state == AbstractMachineUtils.ACCEPT:
                 self.draw_state(state, (x, y), "accept")
             else:
                 self.draw_state(state, (x, y))
@@ -119,7 +168,7 @@ class AbstractMachineGUI():
             # Draw each label with vertical spacing.
             for i, sym in enumerate(symbols):
                 self.canvas.create_text(x1, base_label_y - i * self.LABEL_SPACING, text=sym,
-                                        fill="red", font=("Arial", 10), tags="transition")
+                                        fill="black", font=("Arial", 10), tags="transition")
             return
 
         # Compute the start and end points along the boundary of the circles.
@@ -156,7 +205,7 @@ class AbstractMachineGUI():
         # Draw all symbols.
         for i, sym in enumerate(symbols):
             self.canvas.create_text(base_label_x, base_label_y - i * self.LABEL_SPACING,
-                                    text=sym, fill="red", font=("Arial", 10), tags="transition")
+                                    text=sym, fill="black", font=("Arial", 10), tags="transition")
 
     def redraw_transitions(self):
         self.canvas.delete("transition")
@@ -170,6 +219,13 @@ class AbstractMachineGUI():
         # Draw one arrow per (src, dst) pair with all the symbols as labels.
         for (src, dst), symbols in arrow_data.items():
             self.draw_arrow_with_labels(src, dst, symbols)
+
+    def update_state_indicator(self):
+        for state, items in self.node_items.items():
+            self.canvas.itemconfig(items["circle"], outline="black", width=2)
+        current = self.machine.current_state
+        if current in self.node_items:
+            self.canvas.itemconfig(self.node_items[current]["circle"], outline="red", width=4)
 
     def on_node_press(self, event):
         item = self.canvas.find_closest(event.x, event.y)[0]

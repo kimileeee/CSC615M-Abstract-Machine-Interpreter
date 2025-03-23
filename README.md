@@ -15,8 +15,8 @@ pip install antlr4-python3-runtime antlr4-tools tabulate
 To compile the lexer and parser files from the grammar definitions, use ANTLR:
 
 ```bash
-antlr4 -Dlanguage=Python3 AbstractMachineLexer.g4 -o ./automata
-antlr4 -Dlanguage=Python3 AbstractMachineParser.g4 -o ./automata -visitor
+antlr4 -Dlanguage=Python3 ./automata/AbstractMachineLexer.g4
+antlr4 -Dlanguage=Python3 ./automata/AbstractMachineParser.g4 -visitor
 ```
 
 ### 2. Visualizing the Parse Tree
@@ -24,7 +24,7 @@ antlr4 -Dlanguage=Python3 AbstractMachineParser.g4 -o ./automata -visitor
 To visualize the parse tree for a sample code file, use:
 
 ```bash
-antlr4-parse AbstractMachineParser.g4 AbstractMachineLexer.g4 program -gui ./samples/sample06.txt
+antlr4-parse ./automata/AbstractMachineParser.g4 ./automata/AbstractMachineLexer.g4 program -gui ./samples/sample06.txt
 ```
 
 This command opens a GUI displaying the parse tree for the `sample06.txt` file. You can modify the command to parse other sample files in the `samples/` folder.
