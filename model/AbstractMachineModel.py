@@ -102,12 +102,8 @@ class AbstractMachineModel():
         if self.input_tape:
             self.input_tape.initialize_input(input_string)
         
-        if self.is_two_way:
-            input_string = "#" + input_string + "#"
-            self.pointer = 0
-        else:
-            input_string = "#" + input_string + "#"
-            self.pointer = 0
+        input_string = "#" + input_string + "#"
+        self.pointer = 0
 
         self.input_string = input_string
         self.current_state = self.start_state
@@ -144,6 +140,7 @@ class AbstractMachineModel():
         if not possible:
             # TODO: if deterministic, should return rejected here, but if nondeterministic, should stop exploring this path
             # return f"Error: No transition from state {self.current_state} on symbol '{symbol}'."
+            self.current_state = AbstractMachineUtils.REJECT
             return f"REJECTED"
         
         # Choose a transition (for nondeterminism, extend as needed).
@@ -174,6 +171,41 @@ class AbstractMachineModel():
             return f"REJECTED"
         
         return status
+    
+    def next_step_nda(self):
+        # Save current state set for potential rollback.
+        self.history.append((set(self.active_states), self.pointer, self.input_string))
+
+        new_active_states = set()
+
+        for state in self.active_states:
+            # Execute the new state's action using our reusable method.
+            symbol = self.execute_action(state)
+            print(f"Processing state: {state} with symbol: {symbol}")
+
+            # Lookup possible transitions for this state.
+            state_transitions = self.transitions.get(state, {})
+            possible_next_states = state_transitions.get(symbol, set())
+
+            if not possible_next_states:
+                continue  # No valid transition from this state
+
+            new_active_states.update(possible_next_states)
+
+        if not new_active_states:
+            # If no new states are active, the machine has rejected the input.
+            self.active_states = {AbstractMachineUtils.REJECT}
+            return "REJECTED"
+
+        self.active_states = new_active_states
+
+        # Check if any active state reaches the accept state
+        if AbstractMachineUtils.ACCEPT in self.active_states:
+            return "ACCEPTED"
+
+        # Log the current active states
+        return f"Active States: {self.active_states}, Pointer: {self.pointer}, Input: {self.input_string}"
+
         
 
     def prev_step(self):
@@ -243,43 +275,44 @@ class AbstractMachineModel():
             elif action.startswith(AbstractMachineUtils.LEFT):
                 identifier = action.split("(")[1].rstrip(")")
                 memory = self.data_memory[identifier]
-                next_symbol = next(iter(self.transitions[state]))
+                symbol = next(iter(self.transitions[state]))
                 # Assume transition returns a tuple: (replacement, next_state)
-                replace = self.transitions[state][next_symbol][0] if self.transitions[state][next_symbol][0] else None
-                if memory:
-                    memory.move_left(next_symbol, replace)
+                replace = list(self.transitions[state][symbol])[0][0]
+                if memory and memory.get_left() == symbol:
+                    memory.move_left(replace)
                     log += f"\nState {state} Action: {action} -> Moving left on tape '{identifier}'"
                 else:
-                    log += f"\nState {state} Action: {action} -> Tape '{identifier}' is empty!"
+                    log += f"\nState {state} Action: {action} -> Cannot move left on tape '{identifier}'"
             elif action.startswith(AbstractMachineUtils.RIGHT):
                 identifier = action.split("(")[1].rstrip(")")
                 memory = self.data_memory[identifier]
-                next_symbol = next(iter(self.transitions[state]))
-                replace = self.transitions[state][next_symbol][0] if self.transitions[state][next_symbol][0] else None
-                if memory:
-                    memory.move_right(next_symbol, replace)
+                symbol = next(iter(self.transitions[state]))
+                replace = list(self.transitions[state][symbol])[0][0]
+                if memory and memory.get_right() == symbol:
+                    print(f"Replacing {memory.get_right()} with {replace}")
+                    memory.move_right(replace)
                     log += f"\nState {state} Action: {action} -> Moving right on tape '{identifier}'"
                 else:
-                    log += f"\nState {state} Action: {action} -> Tape '{identifier}' is empty!"
+                    log += f"\nState {state} Action: {action} -> Cannot move right on tape '{identifier}'"
             elif action.startswith(AbstractMachineUtils.UP):
                 identifier = action.split("(")[1].rstrip(")")
                 memory = self.data_memory[identifier]
-                next_symbol = next(iter(self.transitions[state]))
-                replace = self.transitions[state][next_symbol][0] if self.transitions[state][next_symbol][0] else None
-                if memory:
-                    memory.move_up(next_symbol, replace)
+                symbol = next(iter(self.transitions[state]))
+                replace = list(self.transitions[state][symbol])[0][0]
+                if memory and memory.get_up() == symbol:
+                    memory.move_up(replace)
                     log += f"\nState {state} Action: {action} -> Moving up on tape '{identifier}'"
                 else:
-                    log += f"\nState {state} Action: {action} -> Tape '{identifier}' is empty!"
+                    log += f"\nState {state} Action: {action} -> Cannot move up on tape '{identifier}'"
             elif action.startswith(AbstractMachineUtils.DOWN):
                 identifier = action.split("(")[1].rstrip(")")
                 memory = self.data_memory[identifier]
-                next_symbol = next(iter(self.transitions[state]))
-                replace = self.transitions[state][next_symbol][0] if self.transitions[state][next_symbol][0] else None
-                if memory:
-                    memory.move_down(next_symbol, replace)
+                symbol = next(iter(self.transitions[state]))
+                replace = list(self.transitions[state][symbol])[0][0]
+                if memory and memory.get_down() == symbol:
+                    memory.move_down(replace)
                     log += f"\nState {state} Action: {action} -> Moving down on tape '{identifier}'"
                 else:
-                    log += f"\nState {state} Action: {action} -> Tape '{identifier}' is empty!"
+                    log += f"\nState {state} Action: {action} -> Cannot move down on tape '{identifier}'"
         print(log)
         return symbol

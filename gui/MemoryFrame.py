@@ -21,7 +21,7 @@ class MemoryFrame(tk.Frame):
             self.add_memory_widget(identifier, content)
 
     def add_memory_widget(self, identifier, content):
-        mem_frame = tk.Frame(self, relief="groove")
+        mem_frame = tk.Frame(self)
         mem_label = tk.Label(mem_frame, text=f"{identifier}: {content}", anchor="w")
         mem_label.pack(fill=tk.X, padx=5, pady=2)
         mem_frame.pack(fill=tk.X, padx=5, pady=2)

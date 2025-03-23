@@ -153,18 +153,12 @@ class AbstractMachineGUI():
         self.reset_gui()
 
     def reset_gui(self):
-        """
-        Resets the GUI to its initial state.
-        """
-        # Reset the backend machine (if you want to clear its simulation).
-        # Here, we call a reset method on the machine with an empty string.
         self.machine.initialize("")  
 
         # Clear the input entry widget and re-enable it.
         self.input_entry.config(state=tk.NORMAL)
         self.input_entry.delete(0, tk.END)
         
-        self.output.set("")
         self.command.set("")
         self.input_string_frame.update_string("")
         
@@ -176,6 +170,7 @@ class AbstractMachineGUI():
         self.reset_button.config(state=tk.DISABLED)
         
         # Reset the state diagram highlighting.
+        self.update_output("")
         self.update_state_indicator()
         self.update_input_display()
         self.memory_frame.update_memory(self.machine.data_memory)
@@ -189,7 +184,11 @@ class AbstractMachineGUI():
     def next_step(self):
         result = self.machine.next_step()
         
-        self.command.set(self.machine.states[self.machine.current_state])
+        try:
+            self.command.set(self.machine.states[self.machine.current_state])
+        except KeyError:
+            self.command.set("")
+        
         self.update_output(result)
         self.update_state_indicator()
         self.update_input_display()

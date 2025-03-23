@@ -61,13 +61,22 @@ class Tape1D:
             del self.tape[self.head]  # Remove empty cells
         else:
             self.tape[self.head] = symbol
+
+    def get_left(self):
+        return self.tape.get(self.head - 1, self.blank)
+    
+    def get_right(self):
+        return self.tape.get(self.head + 1, self.blank)
     
     def move_left(self, symbol=None):
         self.head -= 1
-        
+        if symbol is not None:
+            self.write(symbol)
     
-    def move_right(self):
+    def move_right(self, symbol=None):
         self.head += 1
+        if symbol is not None:
+            self.write(symbol)
     
     def __repr__(self):
         min_index = min(self.tape.keys(), default=0)
@@ -99,18 +108,38 @@ class Tape2D:
             del self.tape[(self.head_x, self.head_y)]  # Remove empty cells
         else:
             self.tape[(self.head_x, self.head_y)] = symbol
+
+    def get_left(self):
+        return self.tape.get(self.head_x - 1, self.blank)
     
-    def move_left(self):
+    def get_right(self):
+        return self.tape.get(self.head_x + 1, self.blank)
+    
+    def get_up(self):
+        return self.tape.get(self.head_y - 1, self.blank)
+    
+    def get_down(self):
+        return self.tape.get(self.head_y + 1, self.blank)
+    
+    def move_left(self, symbol=None):
         self.head_x -= 1
+        if symbol is not None:
+            self.write(symbol)
     
-    def move_right(self):
+    def move_right(self, symbol=None):
         self.head_x += 1
+        if symbol is not None:
+            self.write(symbol)
     
-    def move_up(self):
+    def move_up(self, symbol=None):
         self.head_y -= 1
+        if symbol is not None:
+            self.write(symbol)
     
-    def move_down(self):
+    def move_down(self, symbol=None):
         self.head_y += 1
+        if symbol is not None:
+            self.write(symbol)
     
     def __repr__(self):
         min_x = min((x for x, _ in self.tape.keys()), default=0)
