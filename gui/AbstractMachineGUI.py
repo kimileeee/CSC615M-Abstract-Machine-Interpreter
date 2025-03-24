@@ -103,9 +103,12 @@ class AbstractMachineGUI():
         self.command_label.pack(pady=5)
 
         # Input trace
-        ttk.Label(self.menu_frame, text="Input Trace:").pack()
-        self.input_string_frame = StringLabelFrame(self.menu_frame, input_string = "")
-        self.input_string_frame.pack(pady=5, padx=5)
+        if self.machine.input_tape == None:
+            ttk.Label(self.menu_frame, text="Input Trace:").pack()
+            self.input_string_frame = StringLabelFrame(self.menu_frame, input_string = "")
+            self.input_string_frame.pack(pady=5, padx=5)
+        else:
+            self.input_string_frame = None
 
         # Memory trace
         ttk.Label(self.menu_frame, text="Memory:").pack()
@@ -121,7 +124,8 @@ class AbstractMachineGUI():
         self.machine.initialize(self.input_entry.get().strip("\n"))
         
         self.command.set(self.machine.states[self.machine.current_state])
-        self.input_string_frame.update_string(self.machine.input_string)
+        if self.input_string_frame:
+            self.input_string_frame.update_string(self.machine.input_string)
         self.update_state_indicator()
         self.update_input_display()
         self.update_memory()
@@ -160,7 +164,8 @@ class AbstractMachineGUI():
         self.input_entry.delete(0, tk.END)
         
         self.command.set("")
-        self.input_string_frame.update_string("")
+        if self.input_string_frame:
+            self.input_string_frame.update_string("")
         
         # Reset button states.
         self.set_input_button.config(state=tk.NORMAL)
@@ -215,7 +220,8 @@ class AbstractMachineGUI():
     
     def update_input_display(self):
         if self.machine.pointer < len(self.machine.input_string):
-            self.input_string_frame.highlight_label(self.machine.pointer)
+            if self.input_string_frame:
+                self.input_string_frame.highlight_label(self.machine.pointer)
 
     def update_output(self, text):
         self.output.set(text)

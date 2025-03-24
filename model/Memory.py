@@ -81,7 +81,8 @@ class Tape1D:
     def __repr__(self):
         min_index = min(self.tape.keys(), default=0)
         max_index = max(self.tape.keys(), default=0)
-        return ''.join(self.tape.get(i, self.blank) for i in range(min_index, max_index + 1))
+        tape_string = ''.join(self.tape.get(i, self.blank) for i in range(min_index, max_index + 1))
+        return f"(head: {self.head}, tape: {tape_string})"
 
 class Tape2D:
     def __init__(self, blank_symbol='#'):
@@ -151,4 +152,5 @@ class Tape2D:
         for y in range(min_y, max_y + 1):
             row = ''.join(self.tape.get((x, y), self.blank) for x in range(min_x, max_x + 1))
             result.append(row)
-        return '\n'.join(result)
+        result = '\n'.join(result)
+        return f"(head: ({self.head_x}, {self.head_y}), tape: {result})"

@@ -232,11 +232,13 @@ class AbstractMachineModel():
                 self.pointer = max(0, self.pointer - 1)
                 symbol = self.input_string[self.pointer]
                 log += f"\nTwo-Way: Scanned left to symbol '{symbol}'"
+            
             elif action.startswith(AbstractMachineUtils.SCAN_RIGHT):
                 self.pointer += 1
                 if self.pointer < len(self.input_string):
                     symbol = self.input_string[self.pointer]
                     log += f"\nTwo-Way: Scanned right to symbol '{symbol}'"
+            
             elif action.startswith(AbstractMachineUtils.SCAN):
                 self.pointer += 1
                 if self.pointer < len(self.input_string):
@@ -261,6 +263,7 @@ class AbstractMachineModel():
                     log += f"\nState {state} Action: {action} -> Read '{symbol}' from {identifier}"
                 else:
                     log += f"\nState {state} Action: {action} -> Memory '{identifier}' is empty!"
+            
             elif action.startswith(AbstractMachineUtils.WRITE):
                 identifier = action.split("(")[1].rstrip(")")
                 memory = self.data_memory[identifier]
@@ -275,41 +278,55 @@ class AbstractMachineModel():
             elif action.startswith(AbstractMachineUtils.LEFT):
                 identifier = action.split("(")[1].rstrip(")")
                 memory = self.data_memory[identifier]
-                symbol = next(iter(self.transitions[state]))
-                # Assume transition returns a tuple: (replacement, next_state)
-                replace = list(self.transitions[state][symbol])[0][0]
-                if memory and memory.get_left() == symbol:
+                symbol = memory.get_left()
+                try:
+                    replace = list(self.transitions[state][symbol])[0][0]
+                except:
+                    return symbol
+                if memory:
                     memory.move_left(replace)
                     log += f"\nState {state} Action: {action} -> Moving left on tape '{identifier}'"
                 else:
                     log += f"\nState {state} Action: {action} -> Cannot move left on tape '{identifier}'"
+            
             elif action.startswith(AbstractMachineUtils.RIGHT):
                 identifier = action.split("(")[1].rstrip(")")
                 memory = self.data_memory[identifier]
-                symbol = next(iter(self.transitions[state]))
-                replace = list(self.transitions[state][symbol])[0][0]
-                if memory and memory.get_right() == symbol:
+                symbol = memory.get_right()
+                try:
+                    replace = list(self.transitions[state][symbol])[0][0]
+                except:
+                    return symbol
+                if memory:
                     print(f"Replacing {memory.get_right()} with {replace}")
                     memory.move_right(replace)
                     log += f"\nState {state} Action: {action} -> Moving right on tape '{identifier}'"
                 else:
                     log += f"\nState {state} Action: {action} -> Cannot move right on tape '{identifier}'"
+            
             elif action.startswith(AbstractMachineUtils.UP):
                 identifier = action.split("(")[1].rstrip(")")
                 memory = self.data_memory[identifier]
-                symbol = next(iter(self.transitions[state]))
-                replace = list(self.transitions[state][symbol])[0][0]
-                if memory and memory.get_up() == symbol:
+                symbol = memory.get_up()
+                try:
+                    replace = list(self.transitions[state][symbol])[0][0]
+                except:
+                    return symbol
+                if memory:
                     memory.move_up(replace)
                     log += f"\nState {state} Action: {action} -> Moving up on tape '{identifier}'"
                 else:
                     log += f"\nState {state} Action: {action} -> Cannot move up on tape '{identifier}'"
+            
             elif action.startswith(AbstractMachineUtils.DOWN):
                 identifier = action.split("(")[1].rstrip(")")
                 memory = self.data_memory[identifier]
-                symbol = next(iter(self.transitions[state]))
-                replace = list(self.transitions[state][symbol])[0][0]
-                if memory and memory.get_down() == symbol:
+                symbol = memory.get_down()
+                try:
+                    replace = list(self.transitions[state][symbol])[0][0]
+                except:
+                    return symbol
+                if memory:
                     memory.move_down(replace)
                     log += f"\nState {state} Action: {action} -> Moving down on tape '{identifier}'"
                 else:
