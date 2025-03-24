@@ -22,3 +22,16 @@ class AbstractMachineUtils:
     RIGHT = get_lexer_name(AbstractMachineParser.RIGHT)
     UP = get_lexer_name(AbstractMachineParser.UP)
     DOWN = get_lexer_name(AbstractMachineParser.DOWN)
+
+    shorthand_actions = {
+        SCAN: "S",
+        SCAN_LEFT: "SL",
+        SCAN_RIGHT: "SR",
+        PRINT: "P",
+        READ: "Rd",
+        WRITE: "Wr",
+        LEFT: "L",
+        RIGHT: "R",
+        UP: "U",
+        DOWN: "D"
+    }

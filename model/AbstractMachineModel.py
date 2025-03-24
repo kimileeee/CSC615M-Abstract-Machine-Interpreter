@@ -97,7 +97,6 @@ class AbstractMachineModel():
 
 
     # MACHINE OPERATIONS
-    
     def initialize(self, input_string):
         if self.input_tape:
             self.input_tape.initialize_input(input_string)
@@ -172,41 +171,6 @@ class AbstractMachineModel():
         
         return status
     
-    def next_step_nda(self):
-        # Save current state set for potential rollback.
-        self.history.append((set(self.active_states), self.pointer, self.input_string))
-
-        new_active_states = set()
-
-        for state in self.active_states:
-            # Execute the new state's action using our reusable method.
-            symbol = self.execute_action(state)
-            print(f"Processing state: {state} with symbol: {symbol}")
-
-            # Lookup possible transitions for this state.
-            state_transitions = self.transitions.get(state, {})
-            possible_next_states = state_transitions.get(symbol, set())
-
-            if not possible_next_states:
-                continue  # No valid transition from this state
-
-            new_active_states.update(possible_next_states)
-
-        if not new_active_states:
-            # If no new states are active, the machine has rejected the input.
-            self.active_states = {AbstractMachineUtils.REJECT}
-            return "REJECTED"
-
-        self.active_states = new_active_states
-
-        # Check if any active state reaches the accept state
-        if AbstractMachineUtils.ACCEPT in self.active_states:
-            return "ACCEPTED"
-
-        # Log the current active states
-        return f"Active States: {self.active_states}, Pointer: {self.pointer}, Input: {self.input_string}"
-
-        
 
     def prev_step(self):
         """
@@ -216,6 +180,7 @@ class AbstractMachineModel():
             return "No previous state."
         self.current_state, self.pointer, self.input_string = self.history.pop()
         return f"(Rewind) State: {self.current_state}, Pointer: {self.pointer}, Input: {self.input_string}"
+
 
     def execute_action(self, state):
         """

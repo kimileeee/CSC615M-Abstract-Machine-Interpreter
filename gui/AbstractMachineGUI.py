@@ -15,8 +15,14 @@ class AbstractMachineGUI():
 
     CIRCLE_COLOR = "lightblue"
     RADIUS = 25
-    RADIUS_FINAL_SMALL = 20
+    RADIUS_FINAL_SMALL = 21
     TRIANGLE_SIZE = 15
+    STATE_LABEL_WIDTH = 15
+    STATE_LABEL_HEIGHT = 20
+
+    STATE_LABEL_FONT = ("Arial", 10, "bold")
+    TRANSITION_LABEL_FONT = ("Arial", 10)
+    STATE_NAME_FONT = ("Arial", 8, "bold")
 
     ARC_OFFSET_SELF_LOOP = 50
     ARC_OFFSET = 40
@@ -288,8 +294,36 @@ class AbstractMachineGUI():
                                                      fill=self.CIRCLE_COLOR, outline="black", width=2, tags=("node", state))
             extra_items["inner_circle"] = inner_circle
             
-        text = self.canvas.create_text(x, y, text=state, font=("Arial", 12, "bold"), tags=("node", state))
+        state_label = state
+        command  = self.machine.states[state]
+        mem = ""
+        if command:
+            if "(" in command:
+                command, mem = command.split("(")
+                command = command.strip()
+                mem = mem.strip(")")
+            state_label = AbstractMachineUtils.shorthand_actions.get(command)
+            if mem != "":
+                state_label += f"({mem})"
         
+        text = self.canvas.create_text(x, y, text=state_label, font=self.STATE_LABEL_FONT, tags=("node", state))
+        
+        label_rect = None
+        label_text = None
+        label_x = x + self.RADIUS - self.STATE_LABEL_WIDTH / 2
+        label_y = y + self.RADIUS - self.STATE_LABEL_HEIGHT / 4
+
+        if state not in [AbstractMachineUtils.ACCEPT, AbstractMachineUtils.REJECT]:
+            label_rect = self.canvas.create_rectangle(
+                label_x - self.STATE_LABEL_WIDTH / 2, label_y - self.STATE_LABEL_HEIGHT / 2,
+                label_x + self.STATE_LABEL_WIDTH / 2, label_y + self.STATE_LABEL_HEIGHT / 2,
+                fill=self.CIRCLE_COLOR, outline="black", width=2, tags=("node", state)
+            )
+            label_text = self.canvas.create_text(label_x, label_y, text=state, 
+                                                font=self.STATE_NAME_FONT, tags=("node", state))
+            extra_items["label_rect"] = label_rect
+            extra_items["label_text"] = label_text
+
         # Store all items (circle, text, and any extras) along with position.
         self.node_items[state] = {"circle": circle, "text": text, "pos": (x, y)}
         self.node_items[state].update(extra_items)
@@ -343,7 +377,7 @@ class AbstractMachineGUI():
                     label_text = f"{symbol} / {replace}"
 
                 self.canvas.create_text(base_label_x, base_label_y - i * self.LABEL_SPACING,
-                                        text=label_text, fill="black", font=("Arial", 10), tags="transition")
+                                        text=label_text, fill="black", font=self.TRANSITION_LABEL_FONT, tags="transition")
             return
 
         # Compute the start and end points along the boundary of the circles.
@@ -387,7 +421,7 @@ class AbstractMachineGUI():
                 label_text = f"{symbol} / {replace}"
             
             self.canvas.create_text(base_label_x, base_label_y - i * self.LABEL_SPACING,
-                                    text=label_text, fill="black", font=("Arial", 10), tags="transition")
+                                    text=label_text, fill="black", font=self.TRANSITION_LABEL_FONT, tags="transition")
 
     def redraw_transitions(self):
         self.canvas.delete("transition")
@@ -443,6 +477,11 @@ class AbstractMachineGUI():
             self.canvas.move(self.node_items[state]["triangle"], dx, dy)
         if "inner_circle" in self.node_items[state]:
             self.canvas.move(self.node_items[state]["inner_circle"], dx, dy)
+        # Move the square label items.
+        if "label_rect" in self.node_items[state]:
+            self.canvas.move(self.node_items[state]["label_rect"], dx, dy)
+        if "label_text" in self.node_items[state]:
+            self.canvas.move(self.node_items[state]["label_text"], dx, dy)
 
         x, y = self.node_items[state]["pos"]
         self.node_items[state]["pos"] = (x + dx, y + dy)
