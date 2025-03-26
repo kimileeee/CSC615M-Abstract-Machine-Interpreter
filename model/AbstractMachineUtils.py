@@ -1,9 +1,6 @@
 from automata.AbstractMachineLexer import AbstractMachineLexer
 from automata.AbstractMachineParser import AbstractMachineParser
 
-########
-# UTILS
-########
 class AbstractMachineUtils:
     
     @staticmethod

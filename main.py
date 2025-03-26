@@ -61,11 +61,8 @@ def main():
             # Interpret source code
             interpretor = AbstractMachineInterpreter()
             interpretor.visit(tree)
-
+            
             interpretor.run_gui()
-
-            # input_string = input("\nInput: ")
-            # print(interpretor.run_machine(input_string))
 
         else:
             print("\nLexical errors found. Please check your source code.")

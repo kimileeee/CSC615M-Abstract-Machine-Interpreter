@@ -26,6 +26,7 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
         self.visitChildren(ctx)
         
         self.machine.machine_initial = copy.deepcopy(self.machine)
+        print(self.machine)
         self.machine.print_machine()
         self.initialize_gui()
         self.run_gui()

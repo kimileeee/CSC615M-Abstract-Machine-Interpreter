@@ -7,12 +7,12 @@ class StringLabelFrame(tk.Frame):
         self.create_labels(input_string)
 
     def create_labels(self, input_string):
-        # Clear any existing labels.
+        # Clear existing labels
         for label in self.labels:
             label.destroy()
         self.labels = []
         
-        # Create new labels.
+        # Create new labels
         for char in input_string:
             label = tk.Label(self, text=char, font=("Arial", 12), fg="black")
             label.pack(side=tk.LEFT, padx=2)

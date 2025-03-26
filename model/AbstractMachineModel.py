@@ -3,6 +3,7 @@ from automata.AbstractMachineParser import AbstractMachineParser
 from model.Memory import Stack, Queue, Tape1D, Tape2D
 from tabulate import tabulate
 from model.AbstractMachineUtils import AbstractMachineUtils
+import copy
 
 class AbstractMachineModel():
     def __init__(self):
@@ -22,6 +23,7 @@ class AbstractMachineModel():
         self.pointer = 0
         self.current_state = None
         self.history = []
+        self.nda_path = None
 
     def reset(self):
         self.data_memory = self.machine_initial.data_memory
@@ -35,8 +37,17 @@ class AbstractMachineModel():
         self.pointer = 0
         self.current_state = self.machine_initial.current_state
         self.history = []
+        self.nda_path = None
 
     # GETTERS AND SETTERS
+    def get_status(self):
+        return {
+            "current_state": self.current_state,
+            "pointer": self.pointer,
+            "input_string": self.input_string,
+            "history": list(self.history)
+        }
+    
     def add_data_memory(self, name, value=None):
         if name in self.data_memory:
             raise Exception("Memory {} already declared".format(name))
@@ -63,6 +74,13 @@ class AbstractMachineModel():
 
     def is_memory_empty(self):
         return all(mem.is_empty() for mem in self.data_memory.values())
+    
+    def is_nondeterministic(self):
+        for state, transitions_for_state in self.transitions.items():
+            for symbol, next_states in transitions_for_state.items():
+                if len(next_states) > 1:
+                    return True
+        return False
         
     # DISPLAY/PRINT METHODS
     def __str__(self):
@@ -71,6 +89,7 @@ class AbstractMachineModel():
     def print_machine(self):
         self.print_memory()
         self.print_states()
+        print("Non-deterministic: ", self.is_nondeterministic())
         self.print_transitions()
 
     def print_memory(self):
@@ -112,40 +131,91 @@ class AbstractMachineModel():
         print("Status:")
         print(self.get_status())
         print()
+
+        if self.is_nondeterministic():
+            self.nda_path = self.run_nondeterministic()
+            print(f"Accepted ND Path: {self.nda_path}")
+            if self.nda_path:
+                self.nda_path.pop(0)
+
         return self.get_status()
     
-    def get_status(self):
-        return {
-            "current_state": self.current_state,
-            "pointer": self.pointer,
-            "input_string": self.input_string,
-            "history": list(self.history)
-        }
+    def run_nondeterministic(self):
+        initial_config = (
+            self.current_state, self.pointer, self.input_string,
+            copy.deepcopy(self.data_memory), self.output_string, []
+        )
+        stack = [initial_config]
+        
+        while stack:
+            cur_state, cur_ptr, cur_input, cur_memory, cur_output, cur_path = stack.pop()
+            
+            # If reached an accept state and finished scanning the input, return the path.
+            # TBH not sure sa pointer part hskjdhf
+            if cur_state == AbstractMachineUtils.ACCEPT and cur_ptr >= len(cur_input) - 2:
+                return cur_path + [(cur_state, cur_ptr, cur_input, cur_memory, cur_output)]
+            if cur_state == AbstractMachineUtils.REJECT:
+                continue
+            
+            # Valid pointer
+            if cur_ptr < 0 or cur_ptr >= len(cur_input):
+                continue
+            
+            symbol, new_ptr, new_input, new_memory, new_output = self.execute_action(cur_state, cur_ptr, cur_input, cur_memory, cur_output)
+            state_transitions = self.transitions.get(cur_state, {})
+            possible_transitions = state_transitions.get(symbol)
+            
+            if not possible_transitions:
+                continue  # dead state
+            
+            for next_transition in possible_transitions:
+                new_state = None
+                new_memory = copy.deepcopy(new_memory)
+
+                if isinstance(next_transition, tuple):
+                    replacement, ns = next_transition
+                    new_state = ns
+                    new_input = new_input[:new_ptr] + replacement + new_input[new_ptr+1:]
+                else:
+                    new_state = next_transition
+                
+                new_history = cur_path + [(cur_state, cur_ptr, cur_input, cur_memory, cur_output)]
+                stack.append((new_state, new_ptr, new_input, new_memory, new_output, new_history))
+        return None
+
 
     def next_step(self):        
-        # Save current state for potential rollback.
+        # Save current state for rollback
         self.history.append((self.current_state, self.pointer, self.input_string))
         
-        # Execute the new state's action using our reusable method.
-        symbol = self.execute_action(self.current_state)
+        symbol, self.pointer, self.input_string, self.data_memory, self.output_string = self.execute_action(self.current_state, self.pointer, self.input_string, self.data_memory, self.output_string)
         # print(self)
 
-        # Print the overall status.
+        # Print the overall status
         status = f"State: {self.current_state}, Pointer: {self.pointer}, Input: {self.input_string}"
 
         state_transitions = self.transitions.get(self.current_state, {})
         possible = state_transitions.get(symbol)
         if not possible:
-            # TODO: if deterministic, should return rejected here, but if nondeterministic, should stop exploring this path
-            # return f"Error: No transition from state {self.current_state} on symbol '{symbol}'."
             self.current_state = AbstractMachineUtils.REJECT
             if self.output_string is None:
                 return f"REJECTED"
             else:
                 return self.output_string
-        
-        # Choose a transition (for nondeterminism, extend as needed).
+            
+        # Choose a transition for nondeterministic machine
+        nda_path = None
+        if self.nda_path:
+            next_nda, next_ptr, next_input, next_memory, next_output = self.nda_path.pop(0)
+
         next_transition = next(iter(possible))
+        if nda_path and len(possible) > 1:
+            try:
+                next_transition = next_nda
+                print(f"Choosing transition: {next_transition} from {possible}")
+            except:
+                return "REJECTED"
+            
         replacement = None
         if isinstance(next_transition, tuple):
             replacement, next_state = next_transition
@@ -158,10 +228,10 @@ class AbstractMachineModel():
         else:
             next_state = next_transition
         
-        # Update the current state.
+        # Update the current state
         self.current_state = next_state
         
-        # Check if we have reached a halting state (accept/reject).
+        # Check if halting state (accept/reject)
         if self.current_state == AbstractMachineUtils.ACCEPT:
             self.history.append((self.current_state, self.pointer, self.input_string))
             if self.output_string is None:
@@ -179,56 +249,48 @@ class AbstractMachineModel():
     
 
     def prev_step(self):
-        """
-        Rolls back the simulation to the previous state.
-        """
         if not self.history:
             return "No previous state."
         self.current_state, self.pointer, self.input_string = self.history.pop()
         return f"(Rewind) State: {self.current_state}, Pointer: {self.pointer}, Input: {self.input_string}"
 
 
-    def execute_action(self, state):
-        """
-        Execute the action associated with the given state.
-        Updates the pointer and/or data_memory as needed.
-        Returns a log message for the action.
-        """
+    def execute_action(self, state, pointer, input_string, data_memory, output_string):
         action = self.states.get(state)
         symbol = "#"
         log = f">> State {state} Action: {action}"
         if action:
             # ----- INPUT OPERATIONS -----
             if action.startswith(AbstractMachineUtils.SCAN_LEFT):
-                self.pointer = max(0, self.pointer - 1)
-                symbol = self.input_string[self.pointer]
+                pointer = max(0, pointer - 1)
+                symbol = input_string[pointer]
                 log += f"\nTwo-Way: Scanned left to symbol '{symbol}'"
             
             elif action.startswith(AbstractMachineUtils.SCAN_RIGHT):
-                self.pointer += 1
-                if self.pointer < len(self.input_string):
-                    symbol = self.input_string[self.pointer]
+                pointer += 1
+                if pointer < len(input_string):
+                    symbol = input_string[pointer]
                     log += f"\nTwo-Way: Scanned right to symbol '{symbol}'"
             
             elif action.startswith(AbstractMachineUtils.SCAN):
-                self.pointer += 1
-                if self.pointer < len(self.input_string):
-                    symbol = self.input_string[self.pointer]
+                pointer += 1
+                if pointer < len(input_string):
+                    symbol = input_string[pointer]
                     log += f"\nOne-Way: Scanned symbol '{symbol}'"
             
             # ----- PRINT OPERATIONS -----
             elif action.startswith(AbstractMachineUtils.PRINT):
                 # Assume output is handled elsewhere; here we log the output.
                 symbol = next(iter(self.transitions[state]))
-                if self.output_string is None:
-                    self.output_string = ""
-                self.output_string += symbol
+                if output_string is None:
+                    output_string = ""
+                output_string += symbol
                 log += f"\nState {state} Action: {action} -> Writing '{symbol}'"
             
             # ----- MEMORY OPERATIONS -----
             elif action.startswith(AbstractMachineUtils.READ):
                 identifier = action.split("(")[1].rstrip(")")
-                memory = self.data_memory[identifier]
+                memory = data_memory[identifier]
                 if memory:
                     if isinstance(memory, Stack):
                         symbol = memory.pop()
@@ -240,7 +302,7 @@ class AbstractMachineModel():
             
             elif action.startswith(AbstractMachineUtils.WRITE):
                 identifier = action.split("(")[1].rstrip(")")
-                memory = self.data_memory[identifier]
+                memory = data_memory[identifier]
                 symbol = next(iter(self.transitions[state]))
                 if isinstance(memory, Stack):
                     memory.push(symbol)
@@ -251,12 +313,12 @@ class AbstractMachineModel():
             # ----- Turing Machine Specific Operations -----
             elif action.startswith(AbstractMachineUtils.LEFT):
                 identifier = action.split("(")[1].rstrip(")")
-                memory = self.data_memory[identifier]
+                memory = data_memory[identifier]
                 symbol = memory.get_left()
                 try:
                     replace = list(self.transitions[state][symbol])[0][0]
                 except:
-                    return symbol
+                    return symbol, pointer, input_string, data_memory, output_string
                 if memory:
                     memory.move_left(replace)
                     log += f"\nState {state} Action: {action} -> Moving left on tape '{identifier}'"
@@ -265,14 +327,13 @@ class AbstractMachineModel():
             
             elif action.startswith(AbstractMachineUtils.RIGHT):
                 identifier = action.split("(")[1].rstrip(")")
-                memory = self.data_memory[identifier]
+                memory = data_memory[identifier]
                 symbol = memory.get_right()
                 try:
                     replace = list(self.transitions[state][symbol])[0][0]
                 except:
-                    return symbol
+                    return symbol, pointer, input_string, data_memory, output_string
                 if memory:
-                    # print(f"Replacing {memory.get_right()} with {replace}")
                     memory.move_right(replace)
                     log += f"\nState {state} Action: {action} -> Moving right on tape '{identifier}'"
                 else:
@@ -280,12 +341,12 @@ class AbstractMachineModel():
             
             elif action.startswith(AbstractMachineUtils.UP):
                 identifier = action.split("(")[1].rstrip(")")
-                memory = self.data_memory[identifier]
+                memory = data_memory[identifier]
                 symbol = memory.get_up()
                 try:
                     replace = list(self.transitions[state][symbol])[0][0]
                 except:
-                    return symbol
+                    return symbol, pointer, input_string, data_memory, output_string
                 if memory:
                     memory.move_up(replace)
                     log += f"\nState {state} Action: {action} -> Moving up on tape '{identifier}'"
@@ -294,16 +355,16 @@ class AbstractMachineModel():
             
             elif action.startswith(AbstractMachineUtils.DOWN):
                 identifier = action.split("(")[1].rstrip(")")
-                memory = self.data_memory[identifier]
+                memory = data_memory[identifier]
                 symbol = memory.get_down()
                 try:
                     replace = list(self.transitions[state][symbol])[0][0]
                 except:
-                    return symbol
+                    return symbol, pointer, input_string, data_memory, output_string
                 if memory:
                     memory.move_down(replace)
                     log += f"\nState {state} Action: {action} -> Moving down on tape '{identifier}'"
                 else:
                     log += f"\nState {state} Action: {action} -> Cannot move down on tape '{identifier}'"
-        # print(log)
-        return symbol
+        print(log)
+        return symbol, pointer, input_string, data_memory, output_string

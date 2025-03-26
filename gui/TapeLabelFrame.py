@@ -5,7 +5,7 @@ class TapeLabelFrame(tk.Frame):
     def __init__(self, parent, identifier, tape, **kwargs):
         super().__init__(parent, **kwargs)
         self.tape = tape
-        self.tape_label = tk.Label(self, text=identifier+": ", font=("Arial", 12))
+        self.tape_label = tk.Label(self, text=identifier+": ", font=("Arial", 10))
         self.tape_label.pack(side=tk.LEFT)
         self.tape_content_frame = tk.Frame(self)
         self.labels = {}
@@ -22,16 +22,13 @@ class TapeLabelFrame(tk.Frame):
             max_index = max(self.tape.tape.keys(), default=0)
             for i in range(min_index, max_index + 1):
                 char = self.tape.tape.get(i, self.tape.blank)
-                label = tk.Label(self.tape_content_frame, text=char, font=("Arial", 12), fg="black")
+                label = tk.Label(self.tape_content_frame, text=char, font=("Arial", 10), fg="black")
                 label.pack(side=tk.LEFT, padx=2)
                 self.labels[i] = label
 
             self.highlight_label(self.tape.head)
 
         elif isinstance(self.tape, Tape2D):
-            # for widget in self.tape_content_frame.winfo_children():
-            #     widget.destroy()
-
             min_x = min((x for x, _ in self.tape.tape.keys()), default=0)
             max_x = max((x for x, _ in self.tape.tape.keys()), default=0)
             min_y = min((y for _, y in self.tape.tape.keys()), default=0)
