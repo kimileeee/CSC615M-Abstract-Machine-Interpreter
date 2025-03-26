@@ -1,0 +1,4 @@
+// All 1
+
+.LOGIC
+q1] SCAN (1,q1), (0,reject), (#,accept)

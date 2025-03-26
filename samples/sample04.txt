@@ -1,3 +1,4 @@
+// a^n b^n c^n
 .DATA
 STACK S1
 .LOGIC

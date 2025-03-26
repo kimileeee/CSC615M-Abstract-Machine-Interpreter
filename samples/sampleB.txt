@@ -1,0 +1,6 @@
+// bit flipping tape
+.DATA
+TAPE T1
+
+.LOGIC
+A] RIGHT(T1) (0/1,A), (1/0,A), (#/#,accept)

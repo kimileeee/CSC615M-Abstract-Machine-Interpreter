@@ -1,0 +1,14 @@
+// Reverse input transducer
+.DATA
+STACK S1
+
+.LOGIC
+J] WRITE(S1) (#,A)
+A] SCAN (a,B), (b,C), (c,D), (#,E)
+B] WRITE(S1) (a,A)
+C] WRITE(S1) (b,A)
+D] WRITE(S1) (c,A)
+E] READ(S1) (a,F), (b,G), (c,H), (#,accept)
+F] PRINT (a,E)
+G] PRINT (b,E)
+H] PRINT (c,E)

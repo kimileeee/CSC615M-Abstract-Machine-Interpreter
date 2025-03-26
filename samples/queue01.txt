@@ -1,3 +1,5 @@
+// a^n b^n c^n
+
 .DATA
 QUEUE Q1
 

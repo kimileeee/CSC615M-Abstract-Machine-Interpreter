@@ -1,3 +1,4 @@
+// 1s are preceded by a 0
 .LOGIC
 A] SCAN RIGHT (0,A), (1,B), (#,accept)
 B] SCAN LEFT (0,C), (1,reject)
