@@ -272,7 +272,7 @@ class AbstractMachineModel():
                 except:
                     return symbol
                 if memory:
-                    print(f"Replacing {memory.get_right()} with {replace}")
+                    # print(f"Replacing {memory.get_right()} with {replace}")
                     memory.move_right(replace)
                     log += f"\nState {state} Action: {action} -> Moving right on tape '{identifier}'"
                 else:
