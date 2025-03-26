@@ -37,4 +37,6 @@ SLASH : '/';
 SYMBOL : [a-zA-Z0-9#$];
 IDENTIFIER : [a-zA-Z][a-zA-Z0-9_]*;
 
+// Comments
+COMMENT : '//' .*? '\n' -> skip;
 WS : [ \t\r\n]+ -> skip;

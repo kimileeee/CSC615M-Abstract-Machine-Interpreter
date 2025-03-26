@@ -10,7 +10,7 @@ else:
 
 def serializedATN():
     return [
-        4,1,24,139,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,25,139,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,1,0,1,0,4,0,21,8,0,11,0,12,0,22,5,0,25,8,0,10,
         0,12,0,28,9,0,1,0,1,0,4,0,32,8,0,11,0,12,0,33,1,1,1,1,3,1,38,8,1,
         1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,3,2,48,8,2,1,3,1,3,1,3,1,3,1,3,1,
@@ -76,7 +76,7 @@ class AbstractMachineParser ( Parser ):
                       "LOGIC", "SCAN", "PRINT", "SCAN_RIGHT", "SCAN_LEFT", 
                       "READ", "WRITE", "RIGHT", "LEFT", "UP", "DOWN", "COMMA", 
                       "CLOSE_BRACKET", "OPEN_PAR", "CLOSE_PAR", "SLASH", 
-                      "SYMBOL", "IDENTIFIER", "WS" ]
+                      "SYMBOL", "IDENTIFIER", "COMMENT", "WS" ]
 
     RULE_program = 0
     RULE_identifier = 1
@@ -116,7 +116,8 @@ class AbstractMachineParser ( Parser ):
     SLASH=21
     SYMBOL=22
     IDENTIFIER=23
-    WS=24
+    COMMENT=24
+    WS=25
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
