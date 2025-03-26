@@ -57,8 +57,9 @@ class Tape1D:
         return self.tape.get(self.head, self.blank)
     
     def write(self, symbol):
-        if symbol == self.blank and self.head in self.tape:
-            del self.tape[self.head]  # Remove empty cells
+        if self.tape[self.head] == self.blank and symbol != self.blank:
+            self.tape[self.head] = symbol
+            self.tape[self.head + 1] = self.blank
         else:
             self.tape[self.head] = symbol
 
@@ -105,10 +106,7 @@ class Tape2D:
         return self.tape.get((self.head_x, self.head_y), self.blank)
     
     def write(self, symbol):
-        if symbol == self.blank and (self.head_x, self.head_y) in self.tape:
-            del self.tape[(self.head_x, self.head_y)]  # Remove empty cells
-        else:
-            self.tape[(self.head_x, self.head_y)] = symbol
+        self.tape[(self.head_x, self.head_y)] = symbol
 
     def get_left(self):
         return self.tape.get(self.head_x - 1, self.blank)

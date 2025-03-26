@@ -18,6 +18,7 @@ class AbstractMachineModel():
         
         # For running the machine
         self.input_string = ""
+        self.output_string = None
         self.pointer = 0
         self.current_state = None
         self.history = []
@@ -29,10 +30,11 @@ class AbstractMachineModel():
         self.start_state = self.machine_initial.start_state
         self.is_two_way = self.machine_initial.is_two_way
         self.input_tape = self.machine_initial.input_tape
-        self.input_string = self.machine_initial.input_string
-        self.pointer = self.machine_initial.pointer
+        self.input_string = ""
+        self.output_string = None
+        self.pointer = 0
         self.current_state = self.machine_initial.current_state
-        self.history = self.machine_initial.history
+        self.history = []
 
     # GETTERS AND SETTERS
     def add_data_memory(self, name, value=None):
@@ -126,21 +128,21 @@ class AbstractMachineModel():
         
         # Execute the new state's action using our reusable method.
         symbol = self.execute_action(self.current_state)
-        
-        print(self)
+        # print(self)
 
         # Print the overall status.
         status = f"State: {self.current_state}, Pointer: {self.pointer}, Input: {self.input_string}"
-        print(status)
-        # Lookup possible transitions.
-        print(f"Symbol: {symbol}\n")
+
         state_transitions = self.transitions.get(self.current_state, {})
         possible = state_transitions.get(symbol)
         if not possible:
             # TODO: if deterministic, should return rejected here, but if nondeterministic, should stop exploring this path
             # return f"Error: No transition from state {self.current_state} on symbol '{symbol}'."
             self.current_state = AbstractMachineUtils.REJECT
-            return f"REJECTED"
+            if self.output_string is None:
+                return f"REJECTED"
+            else:
+                return self.output_string
         
         # Choose a transition (for nondeterminism, extend as needed).
         next_transition = next(iter(possible))
@@ -159,17 +161,21 @@ class AbstractMachineModel():
         # Update the current state.
         self.current_state = next_state
         
-        # Check if we have reached the accepting state.
+        # Check if we have reached a halting state (accept/reject).
         if self.current_state == AbstractMachineUtils.ACCEPT:
-            # Save current (final) state to history.
             self.history.append((self.current_state, self.pointer, self.input_string))
-            return f"ACCEPTED"
+            if self.output_string is None:
+                return f"ACCEPTED"
+            else:
+                return self.output_string
         elif self.current_state == AbstractMachineUtils.REJECT:
-            # Save current (final) state to history.
             self.history.append((self.current_state, self.pointer, self.input_string))
-            return f"REJECTED"
+            if self.output_string is None:
+                return f"REJECTED"
+            else:
+                return self.output_string
         
-        return status
+        # return status
     
 
     def prev_step(self):
@@ -214,6 +220,9 @@ class AbstractMachineModel():
             elif action.startswith(AbstractMachineUtils.PRINT):
                 # Assume output is handled elsewhere; here we log the output.
                 symbol = next(iter(self.transitions[state]))
+                if self.output_string is None:
+                    self.output_string = ""
+                self.output_string += symbol
                 log += f"\nState {state} Action: {action} -> Writing '{symbol}'"
             
             # ----- MEMORY OPERATIONS -----
@@ -263,7 +272,7 @@ class AbstractMachineModel():
                 except:
                     return symbol
                 if memory:
-                    print(f"Replacing {memory.get_right()} with {replace}")
+                    # print(f"Replacing {memory.get_right()} with {replace}")
                     memory.move_right(replace)
                     log += f"\nState {state} Action: {action} -> Moving right on tape '{identifier}'"
                 else:
@@ -296,5 +305,5 @@ class AbstractMachineModel():
                     log += f"\nState {state} Action: {action} -> Moving down on tape '{identifier}'"
                 else:
                     log += f"\nState {state} Action: {action} -> Cannot move down on tape '{identifier}'"
-        print(log)
+        # print(log)
         return symbol

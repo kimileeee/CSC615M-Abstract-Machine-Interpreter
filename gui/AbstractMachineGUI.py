@@ -88,16 +88,16 @@ class AbstractMachineGUI():
         self.steps_btn_frame = ttk.Frame(self.menu_frame)
         self.steps_btn_frame.pack(pady=10)
 
-        self.prev_button = ttk.Button(self.steps_btn_frame, text="<", command=self.prev_step, state=tk.DISABLED)
-        self.prev_button.grid(row=0, column=0)
+        # self.prev_button = ttk.Button(self.steps_btn_frame, text="<", command=self.prev_step, state=tk.DISABLED)
+        # self.prev_button.grid(row=0, column=0)
         self.next_button = ttk.Button(self.steps_btn_frame, text=">", command=self.next_step, state=tk.DISABLED)
-        self.next_button.grid(row=0, column=1)
+        self.next_button.grid(row=0, column=0)
 
         # Buttons for full run
         self.run_button = ttk.Button(self.steps_btn_frame, text="Run", command=self.start_run, state=tk.DISABLED)
-        self.run_button.grid(row=0, column=2)
-        self.reset_button = ttk.Button(self.menu_frame, text="Reset", command=self.stop_run, state=tk.DISABLED)
-        self.reset_button.pack(pady=5)
+        self.run_button.grid(row=0, column=1)
+        self.reset_button = ttk.Button(self.steps_btn_frame, text="Reset", command=self.stop_run, state=tk.DISABLED)
+        self.reset_button.grid(row=0, column=2)
 
         separator = ttk.Separator(self.menu_frame, orient="horizontal")
         separator.pack(fill="x", pady=5)
@@ -138,7 +138,7 @@ class AbstractMachineGUI():
 
         # Enable buttons after input is set.
         self.set_input_button.config(state=tk.DISABLED)
-        self.prev_button.config(state=tk.DISABLED)
+        # self.prev_button.config(state=tk.DISABLED)
         self.next_button.config(state=tk.NORMAL)
         self.run_button.config(state=tk.NORMAL)
         
@@ -147,7 +147,7 @@ class AbstractMachineGUI():
 
         # Disable input entry and buttons while running.
         self.input_entry.config(state=tk.DISABLED)
-        self.prev_button.config(state=tk.DISABLED)
+        # self.prev_button.config(state=tk.DISABLED)
         self.next_button.config(state=tk.DISABLED)
         self.run_button.config(state=tk.DISABLED)
         self.reset_button.config(state=tk.NORMAL)
@@ -163,7 +163,7 @@ class AbstractMachineGUI():
         self.reset_gui()
 
     def reset_gui(self):
-        self.machine.initialize("")  
+        self.machine.reset()
 
         # Clear the input entry widget and re-enable it.
         self.input_entry.config(state=tk.NORMAL)
@@ -175,7 +175,7 @@ class AbstractMachineGUI():
         
         # Reset button states.
         self.set_input_button.config(state=tk.NORMAL)
-        self.prev_button.config(state=tk.DISABLED)
+        # self.prev_button.config(state=tk.DISABLED)
         self.next_button.config(state=tk.DISABLED)
         self.run_button.config(state=tk.DISABLED)
         self.reset_button.config(state=tk.DISABLED)
@@ -184,7 +184,7 @@ class AbstractMachineGUI():
         self.update_output("")
         self.update_state_indicator()
         self.update_input_display()
-        self.memory_frame.update_memory(self.machine.data_memory)
+        self.memory_frame.reset_memory(self.machine.data_memory)
 
     def auto_step(self):
         if self.running and self.machine.current_state != AbstractMachineUtils.ACCEPT and self.machine.current_state != AbstractMachineUtils.REJECT:
@@ -197,17 +197,30 @@ class AbstractMachineGUI():
         
         try:
             self.command.set(self.machine.states[self.machine.current_state])
+            # current = self.machine.current_state
+            # if isinstance(current, set):
+            #     # Create a comma-separated list of actions from all active states.
+            #     cmds = [self.machine.states[s] for s in current if s in self.machine.states]
+            #     self.command.set(", ".join(cmds))
+            # else:
+            #     self.command.set(self.machine.states[current])
         except KeyError:
             self.command.set("")
+
         
         self.update_output(result)
         self.update_state_indicator()
         self.update_input_display()
         self.update_memory()
 
-        if self.machine.current_state == AbstractMachineUtils.ACCEPT:
+        # Disable Next button if any active state is ACCEPT.
+        # current = self.machine.current_state
+        # if (isinstance(current, set) and AbstractMachineUtils.ACCEPT in current) or (current == AbstractMachineUtils.ACCEPT):
+        if self.machine.current_state in [AbstractMachineUtils.ACCEPT, AbstractMachineUtils.REJECT]:
             self.next_button.config(state=tk.DISABLED)
-            self.prev_button.config(state=tk.NORMAL)
+            self.run_button.config(state=tk.DISABLED)
+            self.reset_button.config(state=tk.NORMAL)
+        # self.prev_button.config(state=tk.NORMAL)
 
     def prev_step(self):
         result = self.machine.prev_step()
@@ -218,10 +231,10 @@ class AbstractMachineGUI():
         self.update_input_display()
         self.update_memory()
 
-        if not self.machine.history:
-            self.prev_button.config(state=tk.DISABLED)
+        # if not self.machine.history:
+        #     self.prev_button.config(state=tk.DISABLED)
 
-        if self.machine.current_state != AbstractMachineUtils.ACCEPT:
+        if not self.machine.current_state in [AbstractMachineUtils.ACCEPT, AbstractMachineUtils.REJECT]:
             self.next_button.config(state=tk.NORMAL)
     
     def update_input_display(self):
@@ -230,16 +243,33 @@ class AbstractMachineGUI():
                 self.input_string_frame.highlight_label(self.machine.pointer)
 
     def update_output(self, text):
-        self.output.set(text)
+        if self.machine.output_string:
+            self.output.set(self.machine.output_string)
+        else:
+            self.output.set(text)
         # Update the field background based on the text.
-        if text == "ACCEPTED":
+        if self.machine.current_state == AbstractMachineUtils.ACCEPT or text == "ACCEPTED":
             self.style.configure("Output.TEntry", fieldbackground="#b4d3b2", background="#b4d3b2")
-        elif text == "REJECTED":
+        elif self.machine.current_state == AbstractMachineUtils.REJECT or text == "REJECTED":
             self.style.configure("Output.TEntry", fieldbackground="#d3b2b4", background="#d3b2b4")
         else:
             self.style.configure("Output.TEntry", fieldbackground="white", background="white")
-        # Even though the widget is disabled, the style map ensures the text stays black.
 
+    def update_state_indicator(self):
+        # Reset all state circles to default.
+        for state, items in self.node_items.items():
+            self.canvas.itemconfig(items["circle"], outline="black", width=2)
+        
+        current = self.machine.current_state
+        # If current is a set, highlight all states in it.
+        if isinstance(current, set):
+            for s in current:
+                if s in self.node_items:
+                    self.canvas.itemconfig(self.node_items[s]["circle"], outline="red", width=4)
+        else:
+            if current in self.node_items:
+                self.canvas.itemconfig(self.node_items[current]["circle"], outline="red", width=4)
+                
     def update_memory(self):
         identifier = ""
         if "(" in self.command.get():
@@ -437,14 +467,6 @@ class AbstractMachineGUI():
                     
         for (src, dst), symbols in arrow_data.items():
             self.draw_arrow_with_labels(src, dst, symbols)
-
-
-    def update_state_indicator(self):
-        for state, items in self.node_items.items():
-            self.canvas.itemconfig(items["circle"], outline="black", width=2)
-        current = self.machine.current_state
-        if current in self.node_items:
-            self.canvas.itemconfig(self.node_items[current]["circle"], outline="red", width=4)
 
     def on_node_press(self, event):
         item = self.canvas.find_closest(event.x, event.y)[0]
