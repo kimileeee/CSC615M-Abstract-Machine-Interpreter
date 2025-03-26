@@ -1,0 +1,22 @@
+// hardcoded, default input should be 111
+
+.DATA
+2D_TAPE T1
+
+.LOGIC
+P] RIGHT(T1) (1/1,A)
+A] RIGHT(T1) (1/1, B)
+B] DOWN(T1) (#/1, C)
+C] LEFT(T1) (#/1, D)
+D] UP(T1) (1/1, E)
+E] RIGHT(T1) (1/1, F)
+F] RIGHT(T1) (1/1, G)
+G] DOWN(T1) (#/#, H)
+H] DOWN(T1) (#/1, I)
+I] LEFT(T1) (#/1, J)
+J] LEFT(T1) (#/1, K)
+K] UP(T1) (1/1, L)
+L] UP(T1) (1/1, M)
+M] RIGHT(T1) (1/# , N)
+N] RIGHT(T1) (1/# , O)
+O] RIGHT(T1) (#/#, accept)

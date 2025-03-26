@@ -40,7 +40,7 @@ class Queue:
 
 class Tape1D:
     def __init__(self, blank_symbol='#'):
-        self.tape = {}  # Sparse representation
+        self.tape = {}
         self.head = 0
         self.blank = blank_symbol
 
@@ -94,13 +94,15 @@ class Tape2D:
 
     def initialize_input(self, input_string):
         self.tape = {}
-        self.tape[0] = self.blank
+        self.tape[(0, 0)] = self.blank
         for i, symbol in enumerate(input_string):
-            self.tape[i + 1] = symbol
-        self.tape[len(input_string) + 1] = self.blank
+            self.tape[(i + 1, 0)] = symbol
+        self.tape[(len(input_string) + 1, 0)] = self.blank
 
         self.head_x = 0
         self.head_y = 0  
+        self.tape[(0, 1)] = self.blank
+        print(self.tape.keys())
     
     def read(self):
         return self.tape.get((self.head_x, self.head_y), self.blank)
@@ -109,16 +111,16 @@ class Tape2D:
         self.tape[(self.head_x, self.head_y)] = symbol
 
     def get_left(self):
-        return self.tape.get(self.head_x - 1, self.blank)
+        return self.tape.get((self.head_x - 1, self.head_y), self.blank)
     
     def get_right(self):
-        return self.tape.get(self.head_x + 1, self.blank)
+        return self.tape.get((self.head_x + 1, self.head_y), self.blank)
     
     def get_up(self):
-        return self.tape.get(self.head_y - 1, self.blank)
+        return self.tape.get((self.head_x, self.head_y - 1), self.blank)
     
     def get_down(self):
-        return self.tape.get(self.head_y + 1, self.blank)
+        return self.tape.get((self.head_x, self.head_y + 1), self.blank)
     
     def move_left(self, symbol=None):
         self.head_x -= 1
@@ -151,4 +153,4 @@ class Tape2D:
             row = ''.join(self.tape.get((x, y), self.blank) for x in range(min_x, max_x + 1))
             result.append(row)
         result = '\n'.join(result)
-        return f"(head: ({self.head_x}, {self.head_y}), tape: {result})"
+        return f"(head: ({self.head_x}, {self.head_y}), tape: \n{result})"

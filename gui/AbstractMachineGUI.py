@@ -128,6 +128,8 @@ class AbstractMachineGUI():
     def initialize(self):
         # Initialize machine simulation (backend) with the input.
         self.machine.initialize(self.input_entry.get().strip("\n"))
+
+        print(self.machine.data_memory)
         
         self.command.set(self.machine.states[self.machine.current_state])
         if self.input_string_frame:
