@@ -149,17 +149,19 @@ class AbstractMachineModel():
         
         while stack:
             cur_state, cur_ptr, cur_input, cur_memory, cur_output, cur_path = stack.pop()
-            
-            # If reached an accept state and finished scanning the input, return the path.
-            # TBH not sure sa pointer part hskjdhf
-            if cur_state == AbstractMachineUtils.ACCEPT and cur_ptr >= len(cur_input) - 2:
-                return cur_path + [(cur_state, cur_ptr, cur_input, cur_memory, cur_output)]
-            if cur_state == AbstractMachineUtils.REJECT:
-                continue
-            
+
             # Valid pointer
             if cur_ptr < 0 or cur_ptr >= len(cur_input):
                 continue
+            
+            # If reached an accept state and finished scanning the input, return the path.
+            # TBH not sure sa pointer part hskjdhf
+            # if cur_state == AbstractMachineUtils.ACCEPT and cur_ptr == len(cur_input) - 2:
+            if cur_state == AbstractMachineUtils.ACCEPT and (cur_input[cur_ptr+1] == "#" or cur_input[cur_ptr] == "#"):
+                return cur_path + [(cur_state, cur_ptr, cur_input, cur_memory, cur_output)]
+            if cur_state == AbstractMachineUtils.REJECT:
+                continue
+        
             
             symbol, new_ptr, new_input, new_memory, new_output = self.execute_action(cur_state, cur_ptr, cur_input, cur_memory, cur_output)
             state_transitions = self.transitions.get(cur_state, {})
@@ -204,17 +206,17 @@ class AbstractMachineModel():
                 return self.output_string
             
         # Choose a transition for nondeterministic machine
-        nda_path = None
+        next_transition = next(iter(possible))
+        
         if self.nda_path:
             next_nda, next_ptr, next_input, next_memory, next_output = self.nda_path.pop(0)
 
-        next_transition = next(iter(possible))
-        if nda_path and len(possible) > 1:
-            try:
-                next_transition = next_nda
-                print(f"Choosing transition: {next_transition} from {possible}")
-            except:
-                return "REJECTED"
+            if next_nda and len(possible) > 1:
+                try:
+                    next_transition = next_nda
+                    # print(f"Choosing transition: {next_transition} from {possible}")
+                except:
+                    return "REJECTED"
             
         replacement = None
         if isinstance(next_transition, tuple):
@@ -366,5 +368,5 @@ class AbstractMachineModel():
                     log += f"\nState {state} Action: {action} -> Moving down on tape '{identifier}'"
                 else:
                     log += f"\nState {state} Action: {action} -> Cannot move down on tape '{identifier}'"
-        print(log)
+        # print(log)
         return symbol, pointer, input_string, data_memory, output_string
