@@ -1,9 +1,7 @@
-from automata.AbstractMachineLexer import AbstractMachineLexer
 from automata.AbstractMachineParser import AbstractMachineParser
 from automata.AbstractMachineParserVisitor import AbstractMachineParserVisitor
 from model.Memory import Stack, Queue, Tape1D, Tape2D
 from model.AbstractMachineUtils import AbstractMachineUtils
-from gui.AbstractMachineGUI import AbstractMachineGUI
 from model.AbstractMachineModel import AbstractMachineModel
 import copy
 
@@ -12,13 +10,6 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
     def __init__(self):
         super(AbstractMachineParserVisitor, self).__init__()
         self.machine = AbstractMachineModel()
-        self.gui = None
-
-    def initialize_gui(self):
-        self.gui = AbstractMachineGUI(self.machine)
-
-    def run_gui(self):
-        self.gui.run()
 
     # VISITOR METHODS
     ## START
@@ -28,8 +19,6 @@ class AbstractMachineInterpreter(AbstractMachineParserVisitor):
         self.machine.machine_initial = copy.deepcopy(self.machine)
         print(self.machine)
         self.machine.print_machine()
-        self.initialize_gui()
-        self.run_gui()
 
     ## MEMORY DECLARATION
     def visitMemory_declaration(self, ctx:AbstractMachineParser.Memory_declarationContext):

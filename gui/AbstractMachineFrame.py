@@ -6,8 +6,7 @@ from tkinter import ttk
 from ttkthemes import ThemedTk
 import math
 
-class AbstractMachineGUI():
-    WINDOW_TITLE = "FSM Visualization"
+class AbstractMachineFrame():
     WINDOW_WIDTH = 900
     WINDOW_HEIGHT = 600
     CANVAS_WIDTH = 600
@@ -30,48 +29,45 @@ class AbstractMachineGUI():
 
     STEP_DELAY = 1000
 
-    def __init__(self, machine):
+    def __init__(self, machine, parent):
         self.machine = machine
         self.node_items = {}  # state -> {"circle": id, "text": id, "pos": (x, y), ...}
         self.drag_data = {"state": None, "x": 0, "y": 0}
         
-        self.root = ThemedTk(theme="breeze")
-        self.root.title(self.WINDOW_TITLE)
-        self.root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT}")
+        # Create a frame in the provided parent.
+        self.frame = ttk.Frame(parent, width=self.WINDOW_WIDTH, height=self.WINDOW_HEIGHT)
+        self.frame.pack_propagate(False)
+        self.frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-        # Create a style for our output widget.
-        self.style = ttk.Style(self.root)
+        self.style = ttk.Style(parent)
         self.style.configure("Output.TEntry",
-                        foreground="black",
-                        fieldbackground="white",
-                        background="white")
-        
+                             foreground="black",
+                             fieldbackground="white",
+                             background="white")
         self.style.map("Output.TEntry",
-                foreground=[('disabled', 'black')],
-                fieldbackground=[('disabled', 'white')])
-        
+                       foreground=[('disabled', 'black')],
+                       fieldbackground=[('disabled', 'white')])
         self.style.configure("Command.TEntry",
-                        foreground="black",
-                        fieldbackground="white",
-                        background="white")
-        
+                             foreground="black",
+                             fieldbackground="white",
+                             background="white")
         self.style.map("Command.TEntry",
-                foreground=[('disabled', 'black')],
-                fieldbackground=[('disabled', 'white')])
+                       foreground=[('disabled', 'black')],
+                       fieldbackground=[('disabled', 'white')])
 
         # Canvas for state diagram
-        self.canvas = tk.Canvas(self.root, width=self.CANVAS_WIDTH, height=self.CANVAS_HEIGHT, bg="white")
+        self.canvas = tk.Canvas(self.frame, width=self.CANVAS_WIDTH, height=self.CANVAS_HEIGHT, bg="white")
         self.canvas.pack(side=tk.LEFT, fill=tk.Y)
 
         # Frame for menu
-        self.menu_frame = ttk.Frame(self.root, width=self.WINDOW_WIDTH - self.CANVAS_WIDTH, height=self.WINDOW_HEIGHT)
+        self.menu_frame = ttk.Frame(self.frame, width=self.WINDOW_WIDTH - self.CANVAS_WIDTH, height=self.WINDOW_HEIGHT)
         self.menu_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=10, pady=10)
         
         ttk.Label(self.menu_frame, text="Menu").pack(pady=5)
 
         # Input
         ttk.Label(self.menu_frame, text="Input:").pack()
-        self.input_entry = ttk.Entry(self.menu_frame, justify="center")
+        self.input_entry = ttk.Entry(self.menu_frame, justify="center", width=30)
         self.input_entry.pack()
 
         self.set_input_button = ttk.Button(self.menu_frame, text="Set Input", command=self.initialize)
@@ -80,7 +76,7 @@ class AbstractMachineGUI():
         # Output
         ttk.Label(self.menu_frame, text="Output:").pack()
         self.output = tk.StringVar()
-        self.output_entry = ttk.Entry(self.menu_frame, textvariable=self.output, state="disabled", justify="center", style="Output.TEntry")
+        self.output_entry = ttk.Entry(self.menu_frame, textvariable=self.output, width=30, state="disabled", justify="center", style="Output.TEntry")
         self.output_entry.pack(pady=5)
 
         # Buttons for stepping
@@ -108,9 +104,9 @@ class AbstractMachineGUI():
         self.command_label.pack(pady=5)
 
         # Input trace
-        if self.machine.input_tape == None:
+        if self.machine.input_tape is None:
             ttk.Label(self.menu_frame, text="Input Trace:").pack()
-            self.input_string_frame = StringLabelFrame(self.menu_frame, input_string = "")
+            self.input_string_frame = StringLabelFrame(self.menu_frame, input_string="")
             self.input_string_frame.pack(pady=5, padx=5)
         else:
             self.input_string_frame = None
@@ -125,7 +121,6 @@ class AbstractMachineGUI():
         self.update_input_display()
 
     def initialize(self):
-        # Initialize machine simulation (backend) with the input
         self.machine.initialize(self.input_entry.get().strip("\n"))
         
         self.command.set(self.machine.states[self.machine.current_state])
@@ -135,7 +130,8 @@ class AbstractMachineGUI():
         self.update_input_display()
         self.update_memory()
 
-        # Enable buttons after input is set
+        # Enable buttons after input
+        self.input_entry.config(state=tk.DISABLED)
         self.set_input_button.config(state=tk.DISABLED)
         # self.prev_button.config(state=tk.DISABLED)
         self.next_button.config(state=tk.NORMAL)
@@ -151,7 +147,7 @@ class AbstractMachineGUI():
         self.run_button.config(state=tk.DISABLED)
         self.reset_button.config(state=tk.NORMAL)
 
-        self.root.after(self.STEP_DELAY, self.auto_step)
+        self.frame.after(self.STEP_DELAY, self.auto_step)
 
     def reset_gui(self):
         self.running = False
@@ -178,10 +174,13 @@ class AbstractMachineGUI():
         self.memory_frame.reset_memory(self.machine.data_memory)
 
     def auto_step(self):
-        if self.running and self.machine.current_state != AbstractMachineUtils.ACCEPT and self.machine.current_state != AbstractMachineUtils.REJECT:
-            self.next_step()
+        if self.running and self.machine.current_state not in [AbstractMachineUtils.ACCEPT, AbstractMachineUtils.REJECT]:
+            result = self.next_step()
+            if result is not None:
+                self.running = False
+                return
             if self.running:
-                self.root.after(self.STEP_DELAY, self.auto_step)
+                self.frame.after(self.STEP_DELAY, self.auto_step)
 
     def next_step(self):
         result = self.machine.next_step()
@@ -201,6 +200,8 @@ class AbstractMachineGUI():
             self.next_button.config(state=tk.DISABLED)
             self.run_button.config(state=tk.DISABLED)
             self.reset_button.config(state=tk.NORMAL)
+
+        return result
         # self.prev_button.config(state=tk.NORMAL)
 
     def prev_step(self):
@@ -224,17 +225,18 @@ class AbstractMachineGUI():
                 self.input_string_frame.highlight_label(self.machine.pointer)
 
     def update_output(self, text):
-        if self.machine.output_string:
-            self.output.set(self.machine.output_string)
-        else:
-            self.output.set(text)
-        
-        if self.machine.current_state == AbstractMachineUtils.ACCEPT or text == "ACCEPTED":
-            self.style.configure("Output.TEntry", fieldbackground="#b4d3b2", background="#b4d3b2")
-        elif self.machine.current_state == AbstractMachineUtils.REJECT or text == "REJECTED":
-            self.style.configure("Output.TEntry", fieldbackground="#d3b2b4", background="#d3b2b4")
-        else:
-            self.style.configure("Output.TEntry", fieldbackground="white", background="white")
+        if text is not None:
+            if self.machine.output_string:
+                self.output.set(self.machine.output_string)
+            else:
+                self.output.set(text)
+            
+            if self.machine.current_state == AbstractMachineUtils.ACCEPT or text == "ACCEPTED":
+                self.style.configure("Output.TEntry", fieldbackground="#b4d3b2", background="#b4d3b2")
+            elif self.machine.current_state == AbstractMachineUtils.REJECT or "REJECTED" in text:
+                self.style.configure("Output.TEntry", fieldbackground="#d3b2b4", background="#d3b2b4")
+            else:
+                self.style.configure("Output.TEntry", fieldbackground="white", background="white")
 
     def update_state_indicator(self):
         # Reset all state circles to default
@@ -255,7 +257,7 @@ class AbstractMachineGUI():
             self.memory_frame.remove_highlight()
         
     def run(self):
-        self.root.mainloop()
+        self.frame.mainloop()
 
     def draw_state_diagram(self):
         center_x = self.CANVAS_WIDTH // 2

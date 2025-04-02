@@ -1,8 +1,6 @@
-from automata.AbstractMachineLexer import AbstractMachineLexer
-from automata.AbstractMachineParser import AbstractMachineParser
+from model.AbstractMachineUtils import AbstractMachineUtils
 from model.Memory import Stack, Queue, Tape1D, Tape2D
 from tabulate import tabulate
-from model.AbstractMachineUtils import AbstractMachineUtils
 import copy
 
 class AbstractMachineModel():
@@ -128,9 +126,9 @@ class AbstractMachineModel():
         self.input_string = input_string
         self.current_state = self.start_state
         self.history = []
-        print("Status:")
-        print(self.get_status())
-        print()
+        # print("Status:")
+        # print(self.get_status())
+        # print()
 
         if self.is_nondeterministic():
             self.nda_path = self.run_nondeterministic()
@@ -195,6 +193,7 @@ class AbstractMachineModel():
 
         # Print the overall status
         status = f"State: {self.current_state}, Pointer: {self.pointer}, Input: {self.input_string}"
+        # print(status)
 
         state_transitions = self.transitions.get(self.current_state, {})
         possible = state_transitions.get(symbol)
@@ -208,7 +207,10 @@ class AbstractMachineModel():
         # Choose a transition for nondeterministic machine
         next_transition = next(iter(possible))
         
-        if self.nda_path:
+        if self.is_nondeterministic():
+            if self.nda_path is None:
+                return "REJECTED. No accepted path."
+            
             next_nda, next_ptr, next_input, next_memory, next_output = self.nda_path.pop(0)
 
             if next_nda and len(possible) > 1:
@@ -217,6 +219,7 @@ class AbstractMachineModel():
                     # print(f"Choosing transition: {next_transition} from {possible}")
                 except:
                     return "REJECTED"
+                
             
         replacement = None
         if isinstance(next_transition, tuple):
@@ -233,7 +236,7 @@ class AbstractMachineModel():
         # Update the current state
         self.current_state = next_state
         
-        # Check if halting state (accept/reject)
+        # Check if halting state (accept/reject) 
         if self.current_state == AbstractMachineUtils.ACCEPT:
             self.history.append((self.current_state, self.pointer, self.input_string))
             if self.output_string is None:

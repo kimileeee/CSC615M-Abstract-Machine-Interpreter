@@ -43,6 +43,8 @@ class Tape1D:
         self.tape = {}
         self.head = 0
         self.blank = blank_symbol
+        self.tape[0] = self.blank
+        self.tape[1] = self.blank
 
     def initialize_input(self, input_string):
         self.tape = {}
@@ -57,6 +59,13 @@ class Tape1D:
         return self.tape.get(self.head, self.blank)
     
     def write(self, symbol):
+        # if self.head not in self.tape:
+        #     self.tape[self.head] = self.blank
+        #     self.head += 1
+        # if self.head + 1 not in self.tape:
+        #     self.tape[self.head + 1] = self.blank
+        # if self.head - 1 not in self.tape:
+        #     self.tape[self.head - 1] = self.blank
         if self.tape[self.head] == self.blank and symbol != self.blank:
             self.tape[self.head] = symbol
             self.tape[self.head + 1] = self.blank

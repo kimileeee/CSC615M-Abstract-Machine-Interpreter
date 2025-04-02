@@ -21,10 +21,8 @@ antlr4 -Dlanguage=Python3 ./automata/AbstractMachineParser.g4 -o ./automata -vis
 
 ### 2. Running the Main Program in `main.py`
 
-To run the main program and execute the interpreter for a given abstract machine source code, use:
+To run the main program and execute the interpreter, use:
 
 ```bash
-python main.py -f ./samples/sample06.txt
+python main.py
 ```
-
-This will run the abstract machine interpreter script with the specified source code file (in this case, `sample06.txt`) from the `samples/` directory. You can replace the path with any other sample file or custom board game source code file. The program will parse the input and interpret the board game logic according to the grammar definitions.
