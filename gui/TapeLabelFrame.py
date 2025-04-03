@@ -37,8 +37,11 @@ class TapeLabelFrame(tk.Frame):
             for y in range(min_y, max_y + 1):
                 for x in range(min_x, max_x + 1):
                     char = self.tape.tape.get((x, y), self.tape.blank)
+                    # Shift x and y to start from zero
+                    shifted_x = x - min_x
+                    shifted_y = y - min_y
                     label = tk.Label(self.tape_content_frame, text=char, font=("Arial", 12), fg="black")
-                    label.grid(row=y, column=x, padx=2, pady=2)
+                    label.grid(row=shifted_y, column=shifted_x, padx=2, pady=2)
                     self.labels[(x, y)] = label
 
             self.highlight_label((self.tape.head_x, self.tape.head_y))
