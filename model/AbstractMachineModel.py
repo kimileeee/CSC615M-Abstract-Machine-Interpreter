@@ -24,7 +24,7 @@ class AbstractMachineModel():
         self.nda_path = None
 
     def reset(self):
-        self.data_memory = self.machine_initial.data_memory
+        self.data_memory = copy.deepcopy(self.machine_initial.data_memory)
         self.states = self.machine_initial.states
         self.transitions = self.machine_initial.transitions
         self.start_state = self.machine_initial.start_state
