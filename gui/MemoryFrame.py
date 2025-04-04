@@ -18,7 +18,7 @@ class MemoryFrame(tk.Frame):
         
         if isinstance(content, (Tape1D, Tape2D)):
             mem_widget = TapeLabelFrame(mem_frame, identifier, content)
-            mem_widget.pack()
+            mem_widget.pack(fill=tk.X)
         else:
             mem_widget = tk.Label(mem_frame, text=f"{identifier}: {content}", anchor="w")
             mem_widget.pack(fill=tk.X, padx=5, pady=2)

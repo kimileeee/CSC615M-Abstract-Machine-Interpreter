@@ -60,7 +60,7 @@ def edit_code(code_input, compile_output, compile_button, parent_gui):
 def create_gui():
     root = ThemedTk(theme=TK_THEME)
     root.title(WINDOW_TITLE)
-    root.resizable(False, False)
+    # root.resizable(False, False)
 
     style = ttk.Style(root)
     style.configure("Compile.TEntry",

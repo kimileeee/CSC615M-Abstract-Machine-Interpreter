@@ -1,0 +1,29 @@
+.DATA
+
+QUEUE Q1
+
+.LOGIC
+A] SCAN (0,B), (1,C)
+B] WRITE(Q1) (0,A)
+C] WRITE(Q1) (1,D)
+D] SCAN (1,C), (#,E)
+E] READ(Q1) (1,F), (X,G), (0,H), (Y,P)
+F] WRITE(Q1) (1,E)
+G] WRITE(Q1) (X,E)
+H] WRITE(Q1) (X,I)
+I] READ(Q1) (0,J), (1,K), (Y,L), (X,M)
+J] WRITE(Q1) (0,I)
+K] WRITE(Q1) (Y,E)
+L] WRITE(Q1) (Y,I)
+M] WRITE(Q1) (1,N)
+N] READ(Q1) (X,M), (Y,O), (1,F), (0,M)
+O] WRITE(Q1) (0,N)
+P] READ(Q1) (Y,P), (1,Q), (X,W)
+Q] WRITE(Q1) (1,R)
+R] READ(Q1) (1,S), (X,U)
+S] WRITE(Q1) (1,T)
+T] READ(Q1) (1,S), (X,V), (0,H)
+U] READ(Q1) (X,U), (1,accept)
+V] WRITE(Q1) (0,T)
+W] WRITE(Q1) (0,X)
+X] READ(Q1) (0,accept)

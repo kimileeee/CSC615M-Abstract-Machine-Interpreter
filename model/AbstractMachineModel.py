@@ -29,7 +29,11 @@ class AbstractMachineModel():
         self.transitions = self.machine_initial.transitions
         self.start_state = self.machine_initial.start_state
         self.is_two_way = self.machine_initial.is_two_way
-        self.input_tape = self.machine_initial.input_tape
+        try:
+            a = next(mem for mem in self.data_memory if isinstance(self.data_memory.get(mem), Tape1D) or isinstance(self.data_memory.get(mem),Tape2D))
+            self.input_tape = self.data_memory.get(a)
+        except Exception:
+            self.input_tape = None
         self.input_string = ""
         self.output_string = None
         self.pointer = 0

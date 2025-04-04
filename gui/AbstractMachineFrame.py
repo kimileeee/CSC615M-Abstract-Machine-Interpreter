@@ -7,9 +7,9 @@ from ttkthemes import ThemedTk
 import math
 
 class AbstractMachineFrame():
-    WINDOW_WIDTH = 900
+    WINDOW_WIDTH = 1200
     WINDOW_HEIGHT = 600
-    CANVAS_WIDTH = 600
+    CANVAS_WIDTH = 900
     CANVAS_HEIGHT = 600
 
     CIRCLE_COLOR = "lightblue"
@@ -23,11 +23,11 @@ class AbstractMachineFrame():
     TRANSITION_LABEL_FONT = ("Arial", 10)
     STATE_NAME_FONT = ("Arial", 8, "bold")
 
-    SELF_LOOP_OFFSET = 30
-    ARC_OFFSET = 40
+    SELF_LOOP_OFFSET = 25
+    ARC_OFFSET = 30
     LABEL_SPACING = 15 
 
-    STEP_DELAY = 1000
+    STEP_DELAY = 10
 
     def __init__(self, machine, parent):
         self.machine = machine
@@ -393,7 +393,19 @@ class AbstractMachineFrame():
         end_y = y2 - offset_y
 
         # Check if a reverse transition exists (an arrow from dst to src)
-        reverse_exists = any(src in dests for dests in self.machine.transitions.get(dst, {}).values())
+        reverse_exists = False
+        for dests in self.machine.transitions.get(dst, {}).values():
+            for a in dests:
+                if isinstance(a, tuple):
+                    if src == a[1]:
+                        reverse_exists = True
+                        break
+                else:
+                    if src == a:
+                        reverse_exists = True
+                        break
+        # reverse_exists = any(src in dests for dests in self.machine.transitions.get(dst, {}).values())
+        # print(src, dst, reverse_exists, self.machine.transitions.get(dst, {}).values())
 
         # Compute midpoint and perpendicular unit vector for arc control point.
         mid_x = (start_x + end_x) / 2
